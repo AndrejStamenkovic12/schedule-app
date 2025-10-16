@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card glass-effect fade-in-up">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-4x mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                        <h2 class="gradient-text">Create Account</h2>
+                        <p class="text-muted">Join us as a customer or service provider</p>
+                    </div>
+                    
+                    <form method="POST" id="registerForm">
+                        <!-- Account Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">I am a:</label>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="account-type-card" data-role="consumer" onclick="selectAccountType('consumer')">
+                                        <div class="text-center p-3">
+                                            <i class="fas fa-user fa-3x mb-2"></i>
+                                            <h6>Customer</h6>
+                                            <p class="small text-muted mb-0">Book appointments</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="account-type-card" data-role="provider" onclick="selectAccountType('provider')">
+                                        <div class="text-center p-3">
+                                            <i class="fas fa-store fa-3x mb-2"></i>
+                                            <h6>Provider</h6>
+                                            <p class="small text-muted mb-0">Offer services</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="role" name="role" value="consumer" required>
+                        </div>
+                        
+                        <!-- Common Fields -->
+                        <div id="commonFields">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" required 
+                                       placeholder="Choose a username">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required 
+                                       placeholder="Enter your full name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="your@email.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       placeholder="+1 (555) 123-4567">
+                            </div>
+                        </div>
+                        
+                        <!-- Provider-Specific Fields -->
+                        <div id="providerFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="business_name" class="form-label">Business Name</label>
+                                <input type="text" class="form-control" id="business_name" name="business_name" 
+                                       placeholder="Your business name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="service_category" class="form-label">Service Type</label>
+                                <select class="form-select" id="service_category" name="service_category">
+                                    <option value="">Select service type...</option>
+                                    <optgroup label="Hair & Beauty">
+                                        <option value="hair_salon">Hair Salon</option>
+                                        <option value="nail_salon">Nail Salon</option>
+                                        <option value="eyebrow_eyelash">Eyebrow & Eyelash</option>
+                                    </optgroup>
+                                    <optgroup label="Wellness & Spa">
+                                        <option value="massage_therapy">Massage Therapy</option>
+                                        <option value="spa_treatment">Spa Treatment</option>
+                                        <option value="aromatherapy">Aromatherapy</option>
+                                    </optgroup>
+                                    <optgroup label="Fitness & Training">
+                                        <option value="personal_training">Personal Training</option>
+                                        <option value="yoga_classes">Yoga Classes</option>
+                                        <option value="pilates">Pilates</option>
+                                    </optgroup>
+                                    <optgroup label="Health & Medical">
+                                        <option value="dermatology">Dermatology</option>
+                                        <option value="physical_therapy">Physical Therapy</option>
+                                        <option value="nutrition_counseling">Nutrition Counseling</option>
+                                    </optgroup>
+                                    <optgroup label="Specialty Services">
+                                        <option value="makeup_artist">Makeup Artist</option>
+                                        <option value="photography">Photography</option>
+                                        <option value="life_coaching">Life Coaching</option>
+                                    </optgroup>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="services_offered" class="form-label">Specific Services</label>
+                                <div id="serviceCheckboxes" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                    <!-- Hair & Beauty -->
+                                    <div class="service-group" data-category="hair_beauty" style="display: none;">
+                                        <p class="fw-bold mb-2">Hair & Beauty Services:</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Haircuts" id="service_haircuts">
+                                            <label class="form-check-label" for="service_haircuts">Haircuts</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Hair Coloring" id="service_coloring">
+                                            <label class="form-check-label" for="service_coloring">Hair Coloring</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Hair Styling" id="service_styling">
+                                            <label class="form-check-label" for="service_styling">Hair Styling</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Manicure" id="service_manicure">
+                                            <label class="form-check-label" for="service_manicure">Manicure</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Pedicure" id="service_pedicure">
+                                            <label class="form-check-label" for="service_pedicure">Pedicure</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Nail Art" id="service_nailart">
+                                            <label class="form-check-label" for="service_nailart">Nail Art</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Wellness & Spa -->
+                                    <div class="service-group" data-category="wellness_spa" style="display: none;">
+                                        <p class="fw-bold mb-2">Wellness & Spa Services:</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Swedish Massage" id="service_swedish">
+                                            <label class="form-check-label" for="service_swedish">Swedish Massage</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Deep Tissue Massage" id="service_deeptissue">
+                                            <label class="form-check-label" for="service_deeptissue">Deep Tissue Massage</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Hot Stone Massage" id="service_hotstone">
+                                            <label class="form-check-label" for="service_hotstone">Hot Stone Massage</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Facial Treatment" id="service_facial">
+                                            <label class="form-check-label" for="service_facial">Facial Treatment</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Body Scrub" id="service_scrub">
+                                            <label class="form-check-label" for="service_scrub">Body Scrub</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Aromatherapy" id="service_aromatherapy">
+                                            <label class="form-check-label" for="service_aromatherapy">Aromatherapy</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Fitness & Training -->
+                                    <div class="service-group" data-category="fitness" style="display: none;">
+                                        <p class="fw-bold mb-2">Fitness & Training Services:</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Personal Training" id="service_training">
+                                            <label class="form-check-label" for="service_training">Personal Training</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Yoga Classes" id="service_yoga">
+                                            <label class="form-check-label" for="service_yoga">Yoga Classes</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Pilates" id="service_pilates">
+                                            <label class="form-check-label" for="service_pilates">Pilates</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Nutrition Coaching" id="service_nutrition">
+                                            <label class="form-check-label" for="service_nutrition">Nutrition Coaching</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Health & Medical -->
+                                    <div class="service-group" data-category="health_medical" style="display: none;">
+                                        <p class="fw-bold mb-2">Health & Medical Services:</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Dermatology" id="service_dermatology">
+                                            <label class="form-check-label" for="service_dermatology">Dermatology</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Physical Therapy" id="service_physicaltherapy">
+                                            <label class="form-check-label" for="service_physicaltherapy">Physical Therapy</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Chiropractic" id="service_chiropractic">
+                                            <label class="form-check-label" for="service_chiropractic">Chiropractic</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Acupuncture" id="service_acupuncture">
+                                            <label class="form-check-label" for="service_acupuncture">Acupuncture</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Specialty Services -->
+                                    <div class="service-group" data-category="specialty" style="display: none;">
+                                        <p class="fw-bold mb-2">Specialty Services:</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Makeup Artist" id="service_makeup">
+                                            <label class="form-check-label" for="service_makeup">Makeup Artist</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Photography" id="service_photography">
+                                            <label class="form-check-label" for="service_photography">Photography</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Life Coaching" id="service_coaching">
+                                            <label class="form-check-label" for="service_coaching">Life Coaching</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="services[]" value="Tattoo Artist" id="service_tattoo">
+                                            <label class="form-check-label" for="service_tattoo">Tattoo Artist</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="services_offered" name="services_offered">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="business_description" class="form-label">Business Description</label>
+                                <textarea class="form-control" id="business_description" name="business_description" rows="3" 
+                                          placeholder="Describe your business and what makes it special"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Business Address</label>
+                                <input type="text" class="form-control" id="address" name="address" 
+                                       placeholder="123 Main St, City, State">
+                            </div>
+                        </div>
+                        
+                        <!-- Password Fields -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required 
+                                   placeholder="Create a password" minlength="4">
+                            <div class="form-text">At least 4 characters</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                                   placeholder="Confirm your password">
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="text-muted mb-0">Already have an account?</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-link">Sign in here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.account-type-card {
+    border: 2px solid var(--border-light);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    background: var(--glass-bg);
+}
+
+.account-type-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: var(--glass-shadow);
+}
+
+.account-type-card.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.account-type-card.selected i,
+.account-type-card.selected h6,
+.account-type-card.selected p {
+    color: white !important;
+}
+</style>
+
+<script>
+function selectAccountType(role) {
+    // Update hidden input
+    document.getElementById('role').value = role;
+    
+    // Update UI
+    document.querySelectorAll('.account-type-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    const selectedCard = document.querySelector(`[data-role="${role}"]`);
+    selectedCard.classList.add('selected');
+    
+    // Show/hide provider fields
+    const providerFields = document.getElementById('providerFields');
+    const businessNameField = document.getElementById('business_name');
+    
+    if (role === 'provider') {
+        providerFields.style.display = 'block';
+        businessNameField.required = true;
+    } else {
+        providerFields.style.display = 'none';
+        businessNameField.required = false;
+    }
+}
+
+// Initialize with consumer selected
+document.addEventListener('DOMContentLoaded', function() {
+    selectAccountType('consumer');
+    
+    // Service category change handler
+    const serviceCategorySelect = document.getElementById('service_category');
+    if (serviceCategorySelect) {
+        serviceCategorySelect.addEventListener('change', function() {
+            updateServiceCheckboxes(this.value);
+        });
+    }
+    
+    // Update services_offered hidden field when checkboxes change
+    document.querySelectorAll('input[name="services[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateServicesOffered);
+    });
+});
+
+function updateServiceCheckboxes(category) {
+    // Hide all service groups
+    document.querySelectorAll('.service-group').forEach(group => {
+        group.style.display = 'none';
+    });
+    
+    // Show selected category
+    if (category) {
+        const selectedGroup = document.querySelector(`.service-group[data-category="${category}"]`);
+        if (selectedGroup) {
+            selectedGroup.style.display = 'block';
+        }
+    }
+    
+    // Clear all checkboxes
+    document.querySelectorAll('input[name="services[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    updateServicesOffered();
+}
+
+function updateServicesOffered() {
+    const checkedServices = [];
+    document.querySelectorAll('input[name="services[]"]:checked').forEach(checkbox => {
+        checkedServices.push(checkbox.value);
+    });
+    document.getElementById('services_offered').value = checkedServices.join(', ');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}History & Orders - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Appointment History & Orders
+                </h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm" onclick="filterByStatus('all')">
+                        <i class="fas fa-list me-1"></i>All
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="filterByStatus('completed')">
+                        <i class="fas fa-check-circle me-1"></i>Completed
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="filterByStatus('upcoming')">
+                        <i class="fas fa-clock me-1"></i>Upcoming
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="filterByStatus('cancelled')">
+                        <i class="fas fa-times-circle me-1"></i>Cancelled
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Service</th>
+                                    <th>Date & Time</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Booked On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apt in appointments %}
+                                <tr class="appointment-row" data-status="{{ 'upcoming' if apt.datetime > now else 'completed' }}">
+                                    <td>
+                                        {% if apt.datetime > now %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-clock me-1"></i>Upcoming
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-check me-1"></i>Completed
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="service-icon me-2">
+                                                <i class="fas fa-{{ 
+                                                    'cut' if apt.type == 'Hair Salon' else
+                                                    'hand-paper' if apt.type == 'Nail Salon' else
+                                                    'spa' if apt.type == 'Massage Therapy' else
+                                                    'dumbbell' if apt.type == 'Personal Training' else
+                                                    'gem' if apt.type == 'Spa Treatment' else
+                                                    'star'
+                                                }} text-{{ 
+                                                    'primary' if apt.type == 'Hair Salon' else
+                                                    'success' if apt.type == 'Nail Salon' else
+                                                    'info' if apt.type == 'Massage Therapy' else
+                                                    'warning' if apt.type == 'Personal Training' else
+                                                    'secondary' if apt.type == 'Spa Treatment' else
+                                                    'dark'
+                                                }}"></i>
+                                            </div>
+                                            <div>
+                                                <strong>{{ apt.type }}</strong>
+                                                <br>
+                                                <small class="text-muted">ID: #{{ apt.id }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ apt.datetime.strftime('%B %d, %Y') }}</strong>
+                                            <br>
+                                            <span class="text-muted">{{ apt.datetime.strftime('%I:%M %p') }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ apt.duration }} min
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if apt.notes %}
+                                            <span class="text-truncate d-inline-block" style="max-width: 200px;" 
+                                                  title="{{ apt.notes }}">
+                                                {{ apt.notes }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No notes</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ apt.created_at.strftime('%m/%d/%Y') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if apt.datetime > now %}
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="cancelAppointment({{ apt.id }})"
+                                                    title="Cancel Appointment">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-outline-secondary btn-sm" 
+                                                    onclick="rebookAppointment({{ apt.id }})"
+                                                    title="Rebook This Service">
+                                                <i class="fas fa-redo"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">
+                                                <i class="fas fa-chart-bar me-1"></i>
+                                                Total Appointments:
+                                            </span>
+                                            <strong>{{ appointments|length }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Upcoming:
+                                            </span>
+                                            <strong>{{ appointments|selectattr('datetime', '>', now)|list|length }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No appointment history</h5>
+                        <p class="text-muted">Your appointment history will appear here once you start booking services.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Cancel Appointment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this appointment? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>No, Keep It
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmCancel">
+                    <i class="fas fa-trash me-1"></i>Yes, Cancel It
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rebook Modal -->
+<div class="modal fade" id="rebookModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-redo text-info me-2"></i>
+                    Rebook Service
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Would you like to schedule the same service again?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This will take you to the scheduling page with the service type pre-selected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-info" id="confirmRebook">
+                    <i class="fas fa-redo me-1"></i>Yes, Rebook
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

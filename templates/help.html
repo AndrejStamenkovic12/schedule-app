@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Support - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Quick Support Options -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-headset me-2"></i>
+                    Get Help Quickly
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% for topic in support_topics %}
+                    <button class="btn btn-outline-{{ topic.color }} btn-sm" 
+                            onclick="startChat('{{ topic.id }}', '{{ topic.title }}')">
+                        <i class="{{ topic.icon }} me-2"></i>{{ topic.title }}
+                    </button>
+                    {% endfor %}
+                </div>
+                
+                <hr>
+                
+                <div class="contact-info">
+                    <h6 class="text-muted mb-3">Other Ways to Reach Us</h6>
+                    <div class="contact-item mb-2">
+                        <i class="fas fa-envelope text-primary me-2"></i>
+                        <small>support@appointmentscheduler.com</small>
+                    </div>
+                    <div class="contact-item mb-2">
+                        <i class="fas fa-phone text-success me-2"></i>
+                        <small>1-800-APPOINT (1-800-277-6468)</small>
+                    </div>
+                    <div class="contact-item mb-0">
+                        <i class="fas fa-clock text-info me-2"></i>
+                        <small>Mon-Fri: 9AM-6PM EST</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Live Chat Widget -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Live Chat Support
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chat-status mb-3">
+                    <span class="badge bg-success">
+                        <i class="fas fa-circle me-1"></i>Online
+                    </span>
+                    <small class="text-muted ms-2">Average response: 2 minutes</small>
+                </div>
+                <button class="btn btn-primary w-100" onclick="toggleChat()">
+                    <i class="fas fa-comment-dots me-1"></i>Start Chat
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Section -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Frequently Asked Questions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="faqAccordion">
+                    {% for category in faqs %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" 
+                                    aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                <i class="fas fa-{{ 'cog' if category.category == 'General' else 'money-bill-wave' if category.category == 'Refunds & Cancellations' else 'wrench' }} me-2"></i>
+                                {{ category.category }}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                             aria-labelledby="heading{{ loop.index }}" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {% for qa in category.questions %}
+                                <div class="faq-item mb-3">
+                                    <h6 class="text-primary">{{ qa.question }}</h6>
+                                    <p class="text-muted mb-0">{{ qa.answer }}</p>
+                                </div>
+                                {% if not loop.last %}<hr>{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-comments me-2"></i>
+                    Live Chat Support
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <strong>Support Bot</strong>
+                                    <small class="text-muted">now</small>
+                                </div>
+                                <div class="message-text">
+                                    Hello! I'm here to help you. What can I assist you with today?
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="chatInput" 
+                                   placeholder="Type your message here..." 
+                                   onkeypress="handleChatKeyPress(event)">
+                            <button class="btn btn-primary" type="button" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Support Request Modal -->
+<div class="modal fade" id="supportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    Submit Support Request
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supportForm">
+                    <div class="mb-3">
+                        <label for="supportTopic" class="form-label">Support Topic</label>
+                        <select class="form-select" id="supportTopic" required>
+                            <option value="">Select a topic...</option>
+                            <option value="refund">Request Refund</option>
+                            <option value="reschedule">Reschedule Appointment</option>
+                            <option value="technical">Technical Issue</option>
+                            <option value="billing">Billing Question</option>
+                            <option value="general">General Inquiry</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentId" class="form-label">Appointment ID (if applicable)</label>
+                        <input type="text" class="form-control" id="appointmentId" 
+                               placeholder="e.g., #123">
+                    </div>
+                    <div class="mb-3">
+                        <label for="supportMessage" class="form-label">Describe your issue</label>
+                        <textarea class="form-control" id="supportMessage" rows="4" 
+                                  placeholder="Please provide as much detail as possible..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supportEmail" class="form-label">Email for follow-up</label>
+                        <input type="email" class="form-control" id="supportEmail" 
+                               placeholder="your.email@example.com" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitSupportRequest()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

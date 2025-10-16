@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Appointment - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<style>
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    .input-group .is-invalid {
+        border-right: none !important;
+    }
+    .input-group-text.text-danger {
+        background-color: #fff;
+        border-color: #dc3545;
+    }
+    
+    
+    /* Completely remove browser validation icons for all browsers */
+    input::-webkit-validation-bubble-message,
+    select::-webkit-validation-bubble-message,
+    input::-webkit-validation-bubble-icon,
+    select::-webkit-validation-bubble-icon {
+        display: none !important;
+    }
+    
+    /* Remove validation styling for all browsers */
+    input:invalid, select:invalid {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    
+    /* Hide validation bubbles */
+    input:invalid::-webkit-validation-bubble,
+    select:invalid::-webkit-validation-bubble {
+        display: none !important;
+    }
+    
+    /* Remove background validation icons and styling */
+    .form-control:invalid, .form-select:invalid {
+        background-image: none !important;
+        background-size: 0 !important;
+        padding-right: 0.75rem !important;
+        box-shadow: none !important;
+    }
+    
+    /* Specifically target select elements */
+    select.form-select:invalid {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+    }
+</style>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0" id="pageTitle">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Schedule New Appointment
+                </h4>
+                <div id="providerInfo" class="mt-2" style="display:none;">
+                    <h6 class="mb-1" id="providerName"></h6>
+                    <p class="mb-0 small opacity-75" id="serviceType"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                
+                <form method="POST" action="{{ url_for('add_appointment') }}" id="appointmentForm" novalidate>
+                    <!-- Hidden fields for provider booking -->
+                    <input type="hidden" id="type" name="type" value="other">
+                    <input type="hidden" id="provider_id" name="provider_id" value="">
+                    
+                    <!-- Booking Form (only available when coming from provider page) -->
+                    <div id="bookingForm" class="row" style="display:none;">
+                        <!-- Date and Time Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Date
+                            </label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="date" name="date">
+                                <span class="input-group-text text-danger" id="date_error" style="display:none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Time
+                            </label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" id="time" name="time">
+                                <span class="input-group-text text-danger" id="time_error" style="display:none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </span>
+                            </div>
+                            <input type="hidden" id="duration" name="duration" value="60">
+                        </div>
+                        
+                        <!-- Provider Schedule Display -->
+                        <div class="col-12 mb-3">
+                            <div id="providerSchedule" style="display:none;">
+                                <div class="card">
+                                    <div class="card-header bg-light py-2">
+                                        <small class="fw-bold">
+                                            <i class="fas fa-calendar-alt me-1"></i>Provider Working Hours
+                                        </small>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div id="scheduleList" class="d-flex flex-wrap gap-2 justify-content-center">
+                                            <!-- Working days will be displayed here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes field moved inside booking form -->
+                        <div class="col-12 mb-3">
+                            <label for="notes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>Notes (Optional)
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Add any special notes or requirements..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Message for direct access -->
+                    <div id="noProviderMessage" class="text-center py-5">
+                        <i class="fas fa-info-circle fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted mb-3">No Provider Selected</h4>
+                        <p class="text-muted mb-4">
+                            To schedule an appointment, please first browse our services and select a provider.
+                        </p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Browse Services & Providers
+                        </a>
+                    </div>
+                    
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-check me-1"></i>Schedule Appointment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Tips for Scheduling
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Booking:</strong> All appointments are scheduled for 60 minutes by default
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Provider Selection:</strong> Choose a specific provider to see their availability
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Time Slots:</strong> Select a date and time within provider working hours
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Confirmation:</strong> Provider will confirm your appointment request
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function showProviderSchedule(providerId, availability) {
+    const providerSchedule = document.getElementById('providerSchedule');
+    const scheduleList = document.getElementById('scheduleList');
+    
+    if (!providerId || !availability) {
+        providerSchedule.style.display = 'none';
+        return;
+    }
+    
+    // Build schedule display (horizontal)
+    const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const dayNamesDisplay = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    let scheduleHTML = '';
+    
+    dayNames.forEach((day, index) => {
+        const dayInfo = availability[day];
+        const isAvailable = dayInfo && dayInfo.enabled;
+        const bgClass = isAvailable ? 'bg-success' : 'bg-secondary';
+        
+        scheduleHTML += `
+            <div class="text-center" style="min-width: 80px;">
+                <div class="badge ${bgClass} mb-1 w-100">${dayNamesDisplay[index]}</div>
+                <div class="small ${isAvailable ? 'text-success' : 'text-muted'}">
+                    ${isAvailable ? `${dayInfo.start}<br>${dayInfo.end}` : 'Closed'}
+                </div>
+            </div>
+        `;
+    });
+    
+    scheduleList.innerHTML = scheduleHTML;
+    providerSchedule.style.display = 'block';
+}
+
+
+
+// Provider selection is now only done through provider pages
+
+// Set minimum date to today and handle URL parameters
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').setAttribute('min', today);
+    
+    // Check if provider is pre-selected (from URL parameter)
+    const urlParams = new URLSearchParams(window.location.search);
+    const providerId = urlParams.get('provider_id');
+    
+    if (providerId) {
+        // Coming from provider page - show booking form and provider info in header
+        document.getElementById('bookingForm').style.display = 'block';
+        document.getElementById('noProviderMessage').style.display = 'none';
+        document.getElementById('providerInfo').style.display = 'block';
+        
+        // Set hidden provider field
+        document.getElementById('provider_id').value = providerId;
+        
+        // Get provider data from the providers data passed to template
+        const providers = JSON.parse('{{ providers|tojson|safe }}');
+        const selectedProvider = providers.find(function(p) { return p.id == providerId; });
+        
+        if (selectedProvider) {
+            const providerName = selectedProvider.business_name || selectedProvider.name;
+            const category = selectedProvider.service_category;
+            const availability = selectedProvider.availability || {};
+            
+            // Map category to appointment type
+            const typeMapping = {
+                'hair_salon': 'Hair Salon',
+                'nail_salon': 'Nail Salon',
+                'massage_therapy': 'Massage Therapy',
+                'personal_training': 'Personal Training',
+                'spa_treatment': 'Spa Treatment',
+                'yoga_classes': 'Yoga Classes',
+                'pilates': 'Pilates',
+                'dermatology': 'Dermatology',
+                'physical_therapy': 'Physical Therapy',
+                'nutrition_counseling': 'Nutrition Counseling',
+                'makeup_artist': 'Makeup Artist',
+                'photography': 'Photography',
+                'life_coaching': 'Life Coaching',
+                'aromatherapy': 'Aromatherapy',
+                'eyebrow_eyelash': 'Eyebrow & Eyelash'
+            };
+            
+            const appointmentType = typeMapping[category] || 'General Service';
+            document.getElementById('type').value = category;
+            
+            // Display in header
+            document.getElementById('providerName').textContent = providerName;
+            document.getElementById('serviceType').textContent = appointmentType;
+            
+            // Show provider schedule with availability data
+            showProviderSchedule(providerId, availability);
+        }
+        
+    } else {
+        // No provider selected - show message to browse services
+        document.getElementById('bookingForm').style.display = 'none';
+        document.getElementById('noProviderMessage').style.display = 'block';
+        document.getElementById('providerInfo').style.display = 'none';
+    }
+});
+
+// Clear error indicator
+function clearError(fieldId) {
+    const errorIcon = document.getElementById(fieldId + '_error');
+    const field = document.getElementById(fieldId);
+    if (errorIcon) errorIcon.style.display = 'none';
+    if (field) field.classList.remove('is-invalid');
+}
+
+// Show error indicator
+function showError(fieldId) {
+    const errorIcon = document.getElementById(fieldId + '_error');
+    const field = document.getElementById(fieldId);
+    if (errorIcon) errorIcon.style.display = 'block';
+    if (field) field.classList.add('is-invalid');
+}
+
+// Add input listeners to clear errors when user starts typing
+['date', 'time'].forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.addEventListener('change', function() {
+            clearError(fieldId);
+        });
+        field.addEventListener('input', function() {
+            clearError(fieldId);
+        });
+    }
+});
+
+// Custom form validation
+document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Clear all previous errors
+    ['type', 'date', 'time'].forEach(clearError);
+    
+    // No need to validate appointment type since it's auto-filled from provider
+    
+    // Validate date
+    const dateInput = document.getElementById('date');
+    if (!dateInput.value) {
+        showError('date');
+        isValid = false;
+    }
+    
+    // Validate time
+    const timeInput = document.getElementById('time');
+    if (!timeInput.value) {
+        showError('time');
+        isValid = false;
+    }
+    
+    // Duration is now set to default 60 minutes, no validation needed
+    
+    // If basic validation failed, stop here
+    if (!isValid) {
+        e.preventDefault();
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+    }
+});
+</script>
+{% endblock %}

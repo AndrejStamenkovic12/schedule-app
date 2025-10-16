@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "username": "testUser",
+    "password": "4ed646ce9f5ce4b6a2312813ffbec20351decea4290083bdc90daae71b7d3253",
+    "email": "stamenkovicandrej12@gmail.com",
+    "created_at": "2025-10-11T19:51:22.400386",
+    "name": "Andrej Stamenkovic",
+    "phone": "0692903202",
+    "profile_picture": ""
+  },
+  {
+    "id": 2,
+    "username": "testUserProvider",
+    "password": "4ed646ce9f5ce4b6a2312813ffbec20351decea4290083bdc90daae71b7d3253",
+    "email": "testUserProvider@gmail.com",
+    "phone": "0692903202",
+    "name": "testUserProvider",
+    "profile_picture": "",
+    "role": "provider",
+    "created_at": "2025-10-13T21:35:44.508149",
+    "business_name": "testUserProvider",
+    "business_description": "testUserProvider",
+    "service_category": "eyebrow_eyelash",
+    "services_offered": "",
+    "address": "testUserProvider",
+    "availability": {
+      "monday": {
+        "enabled": true,
+        "start": "09:30",
+        "end": "17:00"
+      },
+      "tuesday": {
+        "enabled": true,
+        "start": "12:00",
+        "end": "20:00"
+      },
+      "wednesday": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "thursday": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "friday": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "saturday": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "sunday": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00"
+      }
+    }
+  }
+]

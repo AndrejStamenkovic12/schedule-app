@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5 fade-in-up">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3 gradient-text">
+                    <i class="fas fa-calendar-check me-3"></i>
+                    Appointment Scheduler
+                </h1>
+                <p class="lead mb-4">
+                    Transform your personal care routine with our modern appointment management system. 
+                    Schedule beauty, wellness, and fitness appointments effortlessly.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    {% if current_user %}
+                        {% if current_user.role == 'provider' %}
+                            <a href="{{ url_for('provider_dashboard') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                            </a>
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-edit me-2"></i>Manage Business
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('schedule') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus me-2"></i>Schedule Appointment
+                            </a>
+                            <a href="{{ url_for('appointments') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-list me-2"></i>My Appointments
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Get Started
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Navigation Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 hover-card fade-in-up" style="animation-delay: 0.1s;">
+            <div class="card-body text-center p-4">
+                <div class="service-icon mb-3">
+                    <i class="fas fa-cut fa-3x" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                </div>
+                <h5 class="card-title">Services</h5>
+                <p class="card-text">Discover our premium beauty, wellness, and fitness services</p>
+                <a href="{{ url_for('services') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-right me-1"></i>Explore Services
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 hover-card fade-in-up" style="animation-delay: 0.2s;">
+            <div class="card-body text-center p-4">
+                <div class="service-icon mb-3">
+                    <i class="fas fa-question-circle fa-3x" style="background: var(--success-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                </div>
+                <h5 class="card-title">Help & Support</h5>
+                <p class="card-text">Get instant help with our AI assistant and FAQ</p>
+                <a href="{{ url_for('help') }}" class="btn btn-outline-success">
+                    <i class="fas fa-arrow-right me-1"></i>Get Support
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 hover-card fade-in-up" style="animation-delay: 0.3s;">
+            <div class="card-body text-center p-4">
+                <div class="service-icon mb-3">
+                    <i class="fas fa-user-circle fa-3x" style="background: var(--info-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                </div>
+                <h5 class="card-title">Profile</h5>
+                <p class="card-text">Manage your preferences and account settings</p>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-info">
+                    <i class="fas fa-arrow-right me-1"></i>View Profile
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 hover-card fade-in-up" style="animation-delay: 0.4s;">
+            <div class="card-body text-center p-4">
+                <div class="service-icon mb-3">
+                    <i class="fas fa-history fa-3x" style="background: var(--warning-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                </div>
+                <h5 class="card-title">History</h5>
+                <p class="card-text">Track your appointment history and past orders</p>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-arrow-right me-1"></i>View History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Appointments Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card fade-in-up" style="animation-delay: 0.5s;">
+            <div class="card-header glass-effect d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 gradient-text">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Upcoming Appointments
+                </h4>
+                <a href="{{ url_for('appointments') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-eye me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apt in appointments %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            'primary' if apt.type == 'Hair Salon' else
+                                            'success' if apt.type == 'Nail Salon' else
+                                            'info' if apt.type == 'Massage Therapy' else
+                                            'warning' if apt.type == 'Personal Training' else
+                                            'secondary' if apt.type == 'Spa Treatment' else
+                                            'dark'
+                                        }}">
+                                            {{ apt.type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ apt.datetime.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ apt.datetime.strftime('%H:%M') }}</td>
+                                    <td>{{ apt.duration }} min</td>
+                                    <td>{{ apt.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-calendar-plus fa-4x" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                        </div>
+                        {% if current_user %}
+                            <h5 class="mb-3">Ready to get started?</h5>
+                            <p class="text-muted mb-4">Schedule your first appointment and begin your wellness journey today!</p>
+                            <a href="{{ url_for('schedule') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus me-2"></i>Schedule Your First Appointment
+                            </a>
+                        {% else %}
+                            <h5 class="mb-3">Welcome!</h5>
+                            <p class="text-muted mb-4">Create an account to start booking appointments.</p>
+                            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Modal -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tools me-2"></i>
+                    Coming Soon
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-hammer fa-4x text-warning mb-3"></i>
+                <h5 id="featureName">Feature</h5>
+                <p class="text-muted">This feature is currently under development and will be available soon!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

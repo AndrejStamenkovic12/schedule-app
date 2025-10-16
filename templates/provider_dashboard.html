@@ -1,0 +1,1060 @@
+{% extends "base.html" %}
+
+{% block title %}Provider Dashboard - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Header -->
+    <div class="card glass-effect fade-in-up mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    <div class="profile-avatar" style="width: 100px; height: 100px;">
+                        {% if current_user.profile_picture %}
+                            <img src="{{ current_user.profile_picture }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        {% else %}
+                            <i class="fas fa-store fa-2x"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <h2 class="gradient-text mb-2">{{ current_user.business_name or current_user.name }}</h2>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-building me-2"></i>Service Provider Account
+                    </p>
+                    {% if current_user.address %}
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-map-marker-alt me-2"></i>{{ current_user.address }}
+                        </p>
+                    {% endif %}
+                    {% if current_user.services_offered %}
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-concierge-bell me-2"></i>{{ current_user.services_offered }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Appointments Notification -->
+    {% if pending_count > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect border-warning fade-in-up">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Pending Appointment Requests
+                        <span class="badge bg-dark ms-2">{{ pending_count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You have <strong>{{ pending_count }}</strong> appointment request(s) waiting for your approval.
+                    </p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Date & Time</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in pending_bookings %}
+                                <tr id="pending-{{ booking.id }}">
+                                    <td>
+                                        <strong>{{ booking.customer_name }}</strong>
+                                        {% if booking.customer_phone %}
+                                        <br><small class="text-muted">{{ booking.customer_phone }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ booking.type }}</td>
+                                    <td>
+                                        <strong>{{ booking.datetime.strftime('%b %d, %Y') }}</strong>
+                                        <br><small>{{ booking.datetime.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>{{ booking.duration }} min</td>
+                                    <td>
+                                        {% if booking.notes %}
+                                        <small>{{ booking.notes[:50] }}{% if booking.notes|length > 50 %}...{% endif %}</small>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success" 
+                                                    onclick="handleAppointment({{ booking.id }}, 'accept')"
+                                                    title="Accept appointment">
+                                                <i class="fas fa-check"></i> Accept
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" 
+                                                    onclick="handleAppointment({{ booking.id }}, 'decline')"
+                                                    title="Decline appointment">
+                                                <i class="fas fa-times"></i> Decline
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.1s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold text-primary">{{ total_bookings }}</h3>
+                    <p class="text-muted mb-0">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                    <h3 class="fw-bold text-success">{{ upcoming_bookings }}</h3>
+                    <p class="text-muted mb-0">Upcoming Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-check-double fa-3x text-info mb-3"></i>
+                    <h3 class="fw-bold text-info">{{ completed_count }}</h3>
+                    <p class="text-muted mb-0">Completed Appointments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Information -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.4s;">
+                <div class="card-header glass-effect">
+                    <h5 class="mb-0 gradient-text">
+                        <i class="fas fa-info-circle me-2"></i>Business Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Business Name</label>
+                        <p class="mb-0">{{ current_user.business_name or 'Not set' }}</p>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Service Type</label>
+                        <p class="mb-0">
+                            {% if current_user.service_category == 'hair_salon' %}
+                                <span class="badge bg-primary">Hair Salon</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('hair_providers') }}" class="text-primary">Hair Salon Providers</a></small>
+                            {% elif current_user.service_category == 'nail_salon' %}
+                                <span class="badge bg-primary">Nail Salon</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('nail_providers') }}" class="text-primary">Nail Salon Providers</a></small>
+                            {% elif current_user.service_category == 'eyebrow_eyelash' %}
+                                <span class="badge bg-primary">Eyebrow & Eyelash</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('eyebrow_providers') }}" class="text-primary">Eyebrow & Eyelash Providers</a></small>
+                            {% elif current_user.service_category == 'massage_therapy' %}
+                                <span class="badge bg-success">Massage Therapy</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('massage_providers') }}" class="text-success">Massage Therapy Providers</a></small>
+                            {% elif current_user.service_category == 'spa_treatment' %}
+                                <span class="badge bg-success">Spa Treatment</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('spa_providers') }}" class="text-success">Spa Treatment Providers</a></small>
+                            {% elif current_user.service_category == 'aromatherapy' %}
+                                <span class="badge bg-success">Aromatherapy</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('aromatherapy_providers') }}" class="text-success">Aromatherapy Providers</a></small>
+                            {% elif current_user.service_category == 'personal_training' %}
+                                <span class="badge bg-warning">Personal Training</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('training_providers') }}" class="text-warning">Personal Training Providers</a></small>
+                            {% elif current_user.service_category == 'yoga_classes' %}
+                                <span class="badge bg-warning">Yoga Classes</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('yoga_providers') }}" class="text-warning">Yoga Classes Providers</a></small>
+                            {% elif current_user.service_category == 'pilates' %}
+                                <span class="badge bg-warning">Pilates</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('pilates_providers') }}" class="text-warning">Pilates Providers</a></small>
+                            {% elif current_user.service_category == 'dermatology' %}
+                                <span class="badge bg-info">Dermatology</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('dermatology_providers') }}" class="text-info">Dermatology Providers</a></small>
+                            {% elif current_user.service_category == 'physical_therapy' %}
+                                <span class="badge bg-info">Physical Therapy</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('physical_therapy_providers') }}" class="text-info">Physical Therapy Providers</a></small>
+                            {% elif current_user.service_category == 'nutrition_counseling' %}
+                                <span class="badge bg-info">Nutrition Counseling</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('nutrition_providers') }}" class="text-info">Nutrition Counseling Providers</a></small>
+                            {% elif current_user.service_category == 'makeup_artist' %}
+                                <span class="badge bg-secondary">Makeup Artist</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('makeup_providers') }}" class="text-secondary">Makeup Artist Providers</a></small>
+                            {% elif current_user.service_category == 'photography' %}
+                                <span class="badge bg-secondary">Photography</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('photography_providers') }}" class="text-secondary">Photography Providers</a></small>
+                            {% elif current_user.service_category == 'life_coaching' %}
+                                <span class="badge bg-secondary">Life Coaching</span>
+                                <br><small class="text-muted">Listed on: <a href="{{ url_for('lifecoaching_providers') }}" class="text-secondary">Life Coaching Providers</a></small>
+                            {% elif current_user.service_category == 'other' %}
+                                <span class="badge bg-dark">Other</span>
+                                <br><small class="text-muted">Not currently listed on any provider page</small>
+                            {% else %}
+                                <span class="badge bg-danger">Not set</span>
+                                <br><small class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Please set your service category to appear in provider listings</small>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <p class="mb-0">{{ current_user.business_description or 'No description provided' }}</p>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Services Offered</label>
+                        <p class="mb-0">{{ current_user.services_offered or 'No services listed' }}</p>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Address</label>
+                        <p class="mb-0">{{ current_user.address or 'No address provided' }}</p>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="form-label fw-bold">Contact Email</label>
+                        <p class="mb-0">{{ current_user.email }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label class="form-label fw-bold">Phone Number</label>
+                        <p class="mb-0">{{ current_user.phone or 'Not provided' }}</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('profile') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Business Info
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.5s;">
+                <div class="card-header glass-effect">
+                    <h5 class="mb-0 gradient-text">
+                        <i class="fas fa-tools me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-success" onclick="showCalendar()">
+                            <i class="fas fa-calendar me-2"></i>View Calendar
+                        </button>
+                        <button class="btn btn-outline-info" onclick="showAvailability()">
+                            <i class="fas fa-clock me-2"></i>Set Availability
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="showReviews()">
+                            <i class="fas fa-star me-2"></i>View Reviews
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmed Appointments -->
+    {% if confirmed_bookings %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.6s;">
+                <div class="card-header glass-effect">
+                    <h5 class="mb-0 gradient-text">
+                        <i class="fas fa-calendar-check me-2"></i>Confirmed Appointments
+                        <span class="badge bg-success ms-2">{{ confirmed_bookings|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Date & Time</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in confirmed_bookings %}
+                                <tr id="confirmed-{{ booking.id }}">
+                                    <td>
+                                        <strong>{{ booking.customer_name }}</strong>
+                                        {% if booking.customer_phone %}
+                                        <br><small class="text-muted">{{ booking.customer_phone }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ booking.type }}</td>
+                                    <td>
+                                        <strong>{{ booking.datetime.strftime('%b %d, %Y') }}</strong>
+                                        <br><small>{{ booking.datetime.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>{{ booking.duration }} min</td>
+                                    <td><span class="badge bg-success">Confirmed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" 
+                                                onclick="completeAppointment({{ booking.id }}, '{{ booking.datetime.isoformat() }}')"
+                                                id="complete-btn-{{ booking.id }}"
+                                                title="Mark as completed">
+                                            <i class="fas fa-check-circle"></i> Complete
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Completed Appointments -->
+    {% if completed_bookings %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.7s;">
+                <div class="card-header glass-effect">
+                    <h5 class="mb-0 gradient-text">
+                        <i class="fas fa-check-double me-2"></i>Completed Appointments
+                        <span class="badge bg-info ms-2">{{ completed_bookings|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Date & Time</th>
+                                    <th>Duration</th>
+                                    <th>Completed At</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in completed_bookings %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ booking.customer_name }}</strong>
+                                        {% if booking.customer_phone %}
+                                        <br><small class="text-muted">{{ booking.customer_phone }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ booking.type }}</td>
+                                    <td>
+                                        <strong>{{ booking.datetime.strftime('%b %d, %Y') }}</strong>
+                                        <br><small>{{ booking.datetime.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>{{ booking.duration }} min</td>
+                                    <td>
+                                        {% if booking.completed_at %}
+                                        <small>{{ booking.completed_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                                        {% else %}
+                                        <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-info">Completed</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No Bookings Message -->
+    {% if not confirmed_bookings and not completed_bookings %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.6s;">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-calendar-plus fa-4x mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                    <h5 class="mb-3">No appointments yet</h5>
+                    <p class="text-muted mb-4">Customers will be able to book appointments with your business once you're listed in the services directory.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Calendar Modal -->
+<div class="modal fade" id="calendarModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar me-2"></i>My Calendar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-primary" onclick="previousMonth()">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button class="btn btn-outline-primary ms-2" onclick="nextMonth()">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary ms-2" onclick="goToToday()">
+                            <i class="fas fa-calendar-day me-1"></i>Today
+                        </button>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <h5 class="mb-0" id="calendarMonthYear"></h5>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="calendarTable">
+                        <thead>
+                            <tr class="table-primary">
+                                <th>Sun</th>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendarBody">
+                            <!-- Calendar will be generated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Legend:</h6>
+                    <span class="badge bg-primary me-2">Has Bookings</span>
+                    <span class="badge bg-secondary me-2">No Bookings</span>
+                    <span class="badge bg-success me-2">Today</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Set Availability Modal -->
+<div class="modal fade" id="availabilityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-clock me-2"></i>Set Your Availability
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Set your working hours for each day. Enter time in 24-hour format (HH:MM, e.g., 09:00, 17:30). Customers will only be able to book appointments during these times.
+                </p>
+                
+                <div id="availabilityForm">
+                    {% set days = [
+                        ('monday', 'Monday'),
+                        ('tuesday', 'Tuesday'),
+                        ('wednesday', 'Wednesday'),
+                        ('thursday', 'Thursday'),
+                        ('friday', 'Friday'),
+                        ('saturday', 'Saturday'),
+                        ('sunday', 'Sunday')
+                    ] %}
+                    
+                    {% for day_key, day_name in days %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="enable_{{ day_key }}" 
+                                               onchange="toggleDay('{{ day_key }}')" 
+                                               {% if current_user.availability and current_user.availability.get(day_key, {}).get('enabled', False) %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="enable_{{ day_key }}">
+                                            {{ day_name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Start Time (HH:MM)</label>
+                                    <input type="text" class="form-control" id="start_{{ day_key }}" 
+                                           pattern="[0-2][0-9]:[0-5][0-9]"
+                                           value="{{ current_user.availability.get(day_key, {}).get('start', '09:00') if current_user.availability else '09:00' }}"
+                                           placeholder="09:00"
+                                           {% if not current_user.availability or not current_user.availability.get(day_key, {}).get('enabled', False) %}disabled{% endif %}>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">End Time (HH:MM)</label>
+                                    <input type="text" class="form-control" id="end_{{ day_key }}"
+                                           pattern="[0-2][0-9]:[0-5][0-9]"
+                                           value="{{ current_user.availability.get(day_key, {}).get('end', '17:00') if current_user.availability else '17:00' }}"
+                                           placeholder="17:00"
+                                           {% if not current_user.availability or not current_user.availability.get(day_key, {}).get('enabled', False) %}disabled{% endif %}>
+                                </div>
+                                <div class="col-md-1 text-center">
+                                    <i class="fas fa-check-circle text-success" id="status_{{ day_key }}" 
+                                       style="{% if not current_user.availability or not current_user.availability.get(day_key, {}).get('enabled', False) %}display:none;{% endif %}"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Examples:</strong> 09:00 = 9 AM, 17:30 = 5:30 PM, 00:00 = midnight, 23:59 = end of day. Use 24-hour format (HH:MM).
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAvailability()">
+                    <i class="fas fa-save me-2"></i>Save Availability
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Reviews Modal -->
+<div class="modal fade" id="reviewsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-star me-2"></i>Customer Reviews
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h2 class="display-4 mb-0" id="avgRating">0.0</h2>
+                                <div id="avgStars" class="mb-2"></div>
+                                <p class="text-muted mb-0">
+                                    <span id="totalReviews">0</span> reviews
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="mb-3">Rating Breakdown</h6>
+                                <div id="ratingBreakdown">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="mb-3">All Reviews</h6>
+                <div id="reviewsList">
+                    <!-- Reviews will be loaded here -->
+                </div>
+                
+                <div id="noReviews" style="display: none;" class="text-center py-5">
+                    <i class="fas fa-star fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                    <h5 class="text-muted">No reviews yet</h5>
+                    <p class="text-muted">Your customers can leave reviews after completing their appointments.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Modal -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tools me-2"></i>Coming Soon
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-hammer fa-4x text-warning mb-3"></i>
+                <h5 id="featureName">Feature</h5>
+                <p class="text-muted">This feature is currently under development and will be available soon!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDate = new Date();
+let calendarModal;
+let bookings = {{ bookings|tojson|safe }};
+
+function showCalendar() {
+    if (!calendarModal) {
+        calendarModal = new bootstrap.Modal(document.getElementById('calendarModal'));
+    }
+    generateCalendar();
+    calendarModal.show();
+}
+
+function generateCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Set month and year title
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                       "July", "August", "September", "October", "November", "December"];
+    document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Get bookings for this month
+    const bookingDates = new Set();
+    bookings.forEach(booking => {
+        const bookingDate = new Date(booking.datetime);
+        if (bookingDate.getMonth() === month && bookingDate.getFullYear() === year) {
+            bookingDates.add(bookingDate.getDate());
+        }
+    });
+    
+    // Generate calendar grid
+    let calendarHTML = '';
+    let day = 1;
+    
+    // 6 weeks maximum
+    for (let week = 0; week < 6; week++) {
+        calendarHTML += '<tr>';
+        
+        for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+            if ((week === 0 && dayOfWeek < firstDay) || day > daysInMonth) {
+                calendarHTML += '<td class="text-muted"></td>';
+            } else {
+                const isToday = day === new Date().getDate() && 
+                               month === new Date().getMonth() && 
+                               year === new Date().getFullYear();
+                const hasBooking = bookingDates.has(day);
+                
+                let cellClass = '';
+                let cellStyle = 'cursor: pointer; padding: 15px;';
+                
+                if (isToday) {
+                    cellClass = 'table-success';
+                    cellStyle += ' font-weight: bold;';
+                }
+                
+                calendarHTML += `<td class="${cellClass}" style="${cellStyle}" onclick="showDayBookings(${day}, ${month}, ${year})">
+                    <div>${day}</div>
+                    ${hasBooking ? '<span class="badge bg-primary badge-sm">●</span>' : ''}
+                </td>`;
+                
+                day++;
+            }
+        }
+        
+        calendarHTML += '</tr>';
+        
+        if (day > daysInMonth) break;
+    }
+    
+    document.getElementById('calendarBody').innerHTML = calendarHTML;
+}
+
+function previousMonth() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    generateCalendar();
+}
+
+function nextMonth() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    generateCalendar();
+}
+
+function goToToday() {
+    currentDate = new Date();
+    generateCalendar();
+}
+
+function showDayBookings(day, month, year) {
+    const selectedDate = new Date(year, month, day);
+    const dateStr = selectedDate.toLocaleDateString();
+    
+    const dayBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.datetime);
+        return bookingDate.getDate() === day && 
+               bookingDate.getMonth() === month && 
+               bookingDate.getFullYear() === year;
+    });
+    
+    if (dayBookings.length === 0) {
+        alert(`No bookings on ${dateStr}`);
+    } else {
+        let message = `Bookings on ${dateStr}:\n\n`;
+        dayBookings.forEach(booking => {
+            const time = new Date(booking.datetime).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+            message += `${time} - ${booking.type} (${booking.duration} min)\n`;
+            if (booking.notes) {
+                message += `  Notes: ${booking.notes}\n`;
+            }
+        });
+        alert(message);
+    }
+}
+
+function showComingSoon(featureName) {
+    document.getElementById('featureName').textContent = featureName;
+    const modal = new bootstrap.Modal(document.getElementById('comingSoonModal'));
+    modal.show();
+}
+
+// Appointment handling functions
+function handleAppointment(appointmentId, action) {
+    const confirmMsg = action === 'accept' ? 
+        'Are you sure you want to ACCEPT this appointment?' : 
+        'Are you sure you want to DECLINE this appointment?';
+    
+    if (!confirm(confirmMsg)) return;
+    
+    const url = `/appointment/${appointmentId}/${action}`;
+    
+    fetch(url, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const message = action === 'accept' ? 
+                'Appointment accepted successfully!' : 
+                'Appointment declined successfully!';
+            alert(message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error processing appointment. Please try again.');
+        console.error('Error:', error);
+    });
+}
+
+// Complete appointment function with time validation
+function completeAppointment(appointmentId, appointmentDateTime) {
+    const appointmentTime = new Date(appointmentDateTime);
+    const currentTime = new Date();
+    
+    // Check if appointment time has been reached
+    if (currentTime < appointmentTime) {
+        const timeDiff = appointmentTime - currentTime;
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        let timeMessage = '';
+        if (hours > 0) {
+            timeMessage = `${hours} hour(s) and ${minutes} minute(s)`;
+        } else {
+            timeMessage = `${minutes} minute(s)`;
+        }
+        
+        alert(`Cannot complete appointment yet. The appointment is scheduled in ${timeMessage}.`);
+        return;
+    }
+    
+    // Confirm completion
+    if (!confirm('Are you sure you want to mark this appointment as COMPLETED?')) {
+        return;
+    }
+    
+    // Show loading state
+    const button = document.getElementById(`complete-btn-${appointmentId}`);
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completing...';
+    button.disabled = true;
+    
+    const url = `/appointment/${appointmentId}/complete`;
+    
+    fetch(url, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Appointment marked as completed successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('Error completing appointment. Please try again.');
+        console.error('Error:', error);
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Check and disable completion buttons for future appointments on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const currentTime = new Date();
+    
+    // Find all complete buttons and check their appointment times
+    document.querySelectorAll('[id^="complete-btn-"]').forEach(button => {
+        const appointmentId = button.id.replace('complete-btn-', '');
+        const row = document.getElementById(`confirmed-${appointmentId}`);
+        
+        if (row) {
+            // Extract appointment time from the onclick attribute
+            const onclickAttr = button.getAttribute('onclick');
+            const timeMatch = onclickAttr.match(/'([^']+)'/);
+            
+            if (timeMatch) {
+                const appointmentTime = new Date(timeMatch[1]);
+                
+                if (currentTime < appointmentTime) {
+                    // Disable button and add tooltip for future appointments
+                    button.disabled = true;
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-secondary');
+                    button.title = 'Cannot complete before appointment time';
+                    button.innerHTML = '<i class="fas fa-clock"></i> Wait';
+                }
+            }
+        }
+    });
+});
+
+// Reviews functions
+let reviewsModal;
+
+function showReviews() {
+    if (!reviewsModal) {
+        reviewsModal = new bootstrap.Modal(document.getElementById('reviewsModal'));
+    }
+    
+    // Load reviews
+    fetch(`/provider/{{ current_user.id }}/reviews`)
+        .then(response => response.json())
+        .then(data => {
+            displayReviews(data);
+            reviewsModal.show();
+        })
+        .catch(error => {
+            console.error('Error loading reviews:', error);
+            alert('Error loading reviews. Please try again.');
+        });
+}
+
+function displayReviews(data) {
+    const { reviews, average_rating, total_reviews } = data;
+    
+    // Update summary
+    document.getElementById('avgRating').textContent = average_rating.toFixed(1);
+    document.getElementById('totalReviews').textContent = total_reviews;
+    
+    // Display stars
+    const avgStars = document.getElementById('avgStars');
+    avgStars.innerHTML = getStarsHTML(average_rating);
+    
+    // Calculate rating breakdown
+    const breakdown = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    reviews.forEach(review => {
+        breakdown[review.rating]++;
+    });
+    
+    // Display breakdown
+    const breakdownHTML = Object.keys(breakdown).reverse().map(rating => {
+        const count = breakdown[rating];
+        const percentage = total_reviews > 0 ? (count / total_reviews * 100) : 0;
+        return `
+            <div class="d-flex align-items-center mb-2">
+                <span class="me-2" style="width: 60px;">${rating} stars</span>
+                <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                    <div class="progress-bar bg-warning" style="width: ${percentage}%"></div>
+                </div>
+                <span style="width: 40px;">${count}</span>
+            </div>
+        `;
+    }).join('');
+    document.getElementById('ratingBreakdown').innerHTML = breakdownHTML;
+    
+    // Display individual reviews
+    if (reviews.length === 0) {
+        document.getElementById('reviewsList').style.display = 'none';
+        document.getElementById('noReviews').style.display = 'block';
+    } else {
+        document.getElementById('reviewsList').style.display = 'block';
+        document.getElementById('noReviews').style.display = 'none';
+        
+        const reviewsHTML = reviews.map(review => `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-1">${review.customer_name}</h6>
+                            ${getStarsHTML(review.rating)}
+                        </div>
+                        <small class="text-muted">${review.created_at}</small>
+                    </div>
+                    ${review.comment ? `<p class="mb-0 text-muted">${review.comment}</p>` : '<p class="mb-0 text-muted fst-italic">No comment provided</p>'}
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('reviewsList').innerHTML = reviewsHTML;
+    }
+}
+
+function getStarsHTML(rating) {
+    let starsHTML = '';
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '<i class="fas fa-star text-warning"></i>';
+    }
+    if (hasHalfStar) {
+        starsHTML += '<i class="fas fa-star-half-alt text-warning"></i>';
+    }
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+        starsHTML += '<i class="far fa-star text-warning"></i>';
+    }
+    
+    return starsHTML;
+}
+
+// Availability functions
+let availabilityModal;
+
+function showAvailability() {
+    if (!availabilityModal) {
+        availabilityModal = new bootstrap.Modal(document.getElementById('availabilityModal'));
+    }
+    availabilityModal.show();
+}
+
+function toggleDay(day) {
+    const enableCheckbox = document.getElementById(`enable_${day}`);
+    const startInput = document.getElementById(`start_${day}`);
+    const endInput = document.getElementById(`end_${day}`);
+    const statusIcon = document.getElementById(`status_${day}`);
+    
+    const isEnabled = enableCheckbox.checked;
+    startInput.disabled = !isEnabled;
+    endInput.disabled = !isEnabled;
+    statusIcon.style.display = isEnabled ? 'block' : 'none';
+}
+
+function saveAvailability() {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const availability = {};
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    
+    days.forEach(day => {
+        const enabled = document.getElementById(`enable_${day}`).checked;
+        const start = document.getElementById(`start_${day}`).value.trim();
+        const end = document.getElementById(`end_${day}`).value.trim();
+        
+        // Validate time format and range
+        if (enabled) {
+            if (!timePattern.test(start)) {
+                alert(`Invalid start time for ${day.charAt(0).toUpperCase() + day.slice(1)}: Use HH:MM format (00:00 to 23:59)`);
+                throw new Error('Invalid time format');
+            }
+            
+            if (!timePattern.test(end)) {
+                alert(`Invalid end time for ${day.charAt(0).toUpperCase() + day.slice(1)}: Use HH:MM format (00:00 to 23:59)`);
+                throw new Error('Invalid time format');
+            }
+            
+            if (start >= end) {
+                alert(`Invalid time range for ${day.charAt(0).toUpperCase() + day.slice(1)}: Start time must be before end time`);
+                throw new Error('Invalid time range');
+            }
+        }
+        
+        availability[day] = {
+            enabled: enabled,
+            start: start,
+            end: end
+        };
+    });
+    
+    // Send to server
+    fetch('{{ url_for("update_availability") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(availability)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Availability updated successfully!');
+            availabilityModal.hide();
+            location.reload(); // Reload to show updated availability
+        } else {
+            alert('Error updating availability: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error updating availability. Please try again.');
+        console.error('Error:', error);
+    });
+}
+</script>
+
+<style>
+.detail-item {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+</style>
+{% endblock %}

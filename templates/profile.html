@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="profile-avatar mb-3 mb-md-0" style="width: 120px; height: 120px; margin: 0 auto;">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                    <i class="fas fa-user fa-3x"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h2 class="gradient-text mb-2">{{ user.name or user.username }}</h2>
+                            <p class="text-muted mb-1"><i class="fas fa-user me-2"></i>@{{ user.username }}</p>
+                            {% if user.email %}
+                                <p class="text-muted mb-1"><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                            {% endif %}
+                            {% if user.phone %}
+                                <p class="text-muted mb-1"><i class="fas fa-phone me-2"></i>{{ user.phone }}</p>
+                            {% endif %}
+                            <p class="text-muted mb-0"><i class="fas fa-calendar me-2"></i>Member since {{ user.member_since }}</p>
+                        </div>
+                        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                            <button class="btn btn-primary" onclick="toggleEditMode()">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.1s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold text-primary">{{ user.total_appointments }}</h3>
+                    <p class="text-muted mb-0">Total Appointments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                    <h3 class="fw-bold text-success">{{ user.upcoming_appointments }}</h3>
+                    <p class="text-muted mb-0">Upcoming</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect hover-card fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-check-circle fa-3x text-info mb-3"></i>
+                    <h3 class="fw-bold text-info">{{ user.completed_appointments }}</h3>
+                    <p class="text-muted mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Edit Form (Hidden by default) -->
+    <div id="editForm" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up">
+                <div class="card-header glass-effect">
+                    <h4 class="mb-0 gradient-text">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('edit_profile') }}" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            {% if current_user.role == 'provider' %}
+                                <div class="col-12">
+                                    <label for="business_name" class="form-label">Business Name</label>
+                                    <input type="text" class="form-control" id="business_name" name="business_name" 
+                                           value="{{ current_user.business_name }}" required>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="service_category" class="form-label">Service Category</label>
+                                    <select class="form-select" id="service_category" name="service_category" required>
+                                        <option value="">Select service category...</option>
+                                        <optgroup label="Hair & Beauty">
+                                            <option value="hair_salon" {% if current_user.service_category == 'hair_salon' %}selected{% endif %}>Hair Salon</option>
+                                            <option value="nail_salon" {% if current_user.service_category == 'nail_salon' %}selected{% endif %}>Nail Salon</option>
+                                            <option value="eyebrow_eyelash" {% if current_user.service_category == 'eyebrow_eyelash' %}selected{% endif %}>Eyebrow & Eyelash</option>
+                                        </optgroup>
+                                        <optgroup label="Wellness & Spa">
+                                            <option value="massage_therapy" {% if current_user.service_category == 'massage_therapy' %}selected{% endif %}>Massage Therapy</option>
+                                            <option value="spa_treatment" {% if current_user.service_category == 'spa_treatment' %}selected{% endif %}>Spa Treatment</option>
+                                            <option value="aromatherapy" {% if current_user.service_category == 'aromatherapy' %}selected{% endif %}>Aromatherapy</option>
+                                        </optgroup>
+                                        <optgroup label="Fitness & Training">
+                                            <option value="personal_training" {% if current_user.service_category == 'personal_training' %}selected{% endif %}>Personal Training</option>
+                                            <option value="yoga_classes" {% if current_user.service_category == 'yoga_classes' %}selected{% endif %}>Yoga Classes</option>
+                                            <option value="pilates" {% if current_user.service_category == 'pilates' %}selected{% endif %}>Pilates</option>
+                                        </optgroup>
+                                        <optgroup label="Health & Medical">
+                                            <option value="dermatology" {% if current_user.service_category == 'dermatology' %}selected{% endif %}>Dermatology</option>
+                                            <option value="physical_therapy" {% if current_user.service_category == 'physical_therapy' %}selected{% endif %}>Physical Therapy</option>
+                                            <option value="nutrition_counseling" {% if current_user.service_category == 'nutrition_counseling' %}selected{% endif %}>Nutrition Counseling</option>
+                                        </optgroup>
+                                        <optgroup label="Specialty Services">
+                                            <option value="makeup_artist" {% if current_user.service_category == 'makeup_artist' %}selected{% endif %}>Makeup Artist</option>
+                                            <option value="photography" {% if current_user.service_category == 'photography' %}selected{% endif %}>Photography</option>
+                                            <option value="life_coaching" {% if current_user.service_category == 'life_coaching' %}selected{% endif %}>Life Coaching</option>
+                                        </optgroup>
+                                        <option value="other" {% if current_user.service_category == 'other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                    <div class="form-text">This determines which provider page your business appears on</div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="business_description" class="form-label">Business Description</label>
+                                    <textarea class="form-control" id="business_description" name="business_description" rows="3">{{ current_user.business_description }}</textarea>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="services_offered" class="form-label">Services Offered</label>
+                                    <input type="text" class="form-control" id="services_offered" name="services_offered" 
+                                           value="{{ current_user.services_offered }}" placeholder="e.g., Haircuts, Coloring, Styling">
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Business Address</label>
+                                    <input type="text" class="form-control" id="address" name="address" 
+                                           value="{{ current_user.address }}" placeholder="123 Main St, City, State">
+                                </div>
+                            {% endif %}
+                            
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ user.name }}" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email }}" placeholder="your@email.com" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ user.phone }}" placeholder="+1 (555) 123-4567">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="profile_picture" class="form-label">Profile Picture</label>
+                                <input type="file" class="form-control" id="profile_picture" name="profile_picture" 
+                                       accept="image/jpeg,image/png,image/gif" onchange="previewImage(event)">
+                                <div class="form-text">JPG, PNG or GIF (Max 5MB)</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div id="imagePreview" class="mt-3" style="display: none;">
+                                    <p class="text-muted mb-2">Preview:</p>
+                                    <img id="preview" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 10px; border: 2px solid var(--border-light);">
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <div class="d-flex gap-2 justify-content-between align-items-center">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Changes
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">
+                                            <i class="fas fa-times me-2"></i>Cancel
+                                        </button>
+                                    </div>
+                                    <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">
+                                        <i class="fas fa-trash me-2"></i>Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card glass-effect fade-in-up" style="animation-delay: 0.4s;">
+                <div class="card-header glass-effect">
+                    <h5 class="mb-0 gradient-text">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('schedule') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Schedule Appointment
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('appointments') }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-list me-2"></i>View My Appointments
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('history') }}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-history me-2"></i>Appointment History
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('services') }}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-concierge-bell me-2"></i>Browse Services
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p>Are you sure you want to delete your account? This will permanently remove:</p>
+                <ul>
+                    <li>Your profile information</li>
+                    <li>All your appointments</li>
+                    <li>Your appointment history</li>
+                    {% if current_user.role == 'provider' %}
+                    <li>Your business listing</li>
+                    {% endif %}
+                </ul>
+                <p class="mb-0"><strong>Type "DELETE" to confirm:</strong></p>
+                <input type="text" id="deleteConfirmation" class="form-control mt-2" placeholder="Type DELETE to confirm">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="deleteAccount()" id="confirmDeleteBtn" disabled>
+                    <i class="fas fa-trash me-2"></i>Delete My Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleEditMode() {
+    const editForm = document.getElementById('editForm');
+    if (editForm.style.display === 'none') {
+        editForm.style.display = 'block';
+        editForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        editForm.style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+}
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('preview');
+            const previewContainer = document.getElementById('imagePreview');
+            preview.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+
+function confirmDeleteAccount() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
+    modal.show();
+    
+    // Reset the confirmation input and button
+    document.getElementById('deleteConfirmation').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+// Enable delete button only when "DELETE" is typed
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmInput = document.getElementById('deleteConfirmation');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    
+    if (confirmInput) {
+        confirmInput.addEventListener('input', function() {
+            if (this.value.toUpperCase() === 'DELETE') {
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+    }
+});
+
+function deleteAccount() {
+    // Show loading state
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+    
+    // Send delete request
+    fetch('{{ url_for("delete_account") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and redirect to home
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal'));
+            modal.hide();
+            
+            // Show success message and redirect
+            window.location.href = '/?message=Account deleted successfully';
+        } else {
+            alert('Error deleting account: ' + data.error);
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete My Account';
+        }
+    })
+    .catch(error => {
+        alert('Error deleting account. Please try again.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete My Account';
+    });
+}
+</script>
+
+<style>
+.detail-item {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+</style>
+{% endblock %}
