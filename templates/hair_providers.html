@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Hair Salon Providers - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="text-center mb-5" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: #f3e8ff; border-radius: 16px;">
+        <i class="fas fa-cut" style="font-size: 24px; color: #7C3AED;"></i>
+    </div>
+    <h1 class="fw-bold mb-3" style="font-size: 40px; color: #111827;" data-translate="hair-salon-providers">Hair Salon Providers</h1>
+    <p class="mx-auto mb-0" style="font-size: 18px; color: #4b5563; max-width: 672px;" data-translate="hair-salon-description">Professional hair styling, coloring, and beauty treatments</p>
+</div>
+
+<!-- Search and Filter -->
+<div class="mb-4">
+    <div class="card border" style="background: white; border-color: #e5e7eb !important; border-radius: 16px; padding: 24px;">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text" style="background: #f9fafb; border-color: #e5e7eb; border-radius: 8px 0 0 8px;">
+                        <i class="fas fa-search" style="color: #6b7280;"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchProvider" 
+                           placeholder="Search providers by name or services..." 
+                           data-translate-placeholder="search-providers-name-services"
+                           oninput="filterProviders()"
+                           style="border-color: #e5e7eb; border-radius: 0 8px 8px 0; padding: 12px; font-size: 14px;">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button class="btn w-100 fw-semibold" onclick="clearSearch()" style="padding: 12px; background: white; color: #4b5563; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#7C3AED';" onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb';">
+                    <i class="fas fa-redo me-2"></i><span data-translate="clear-search">Clear Search</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Providers Grid -->
+    {% if providers %}
+        <div class="row g-4 mb-4" id="providersGrid">
+            {% for provider in providers %}
+            <div class="col-md-6 col-lg-4 provider-card" 
+                 data-name="{{ (provider.business_name or provider.name)|lower }}"
+                 data-services="{{ provider.services_offered|lower }}">
+                <div class="card border h-100" style="background: white; border-color: #e5e7eb !important; border-radius: 16px; padding: 24px; transition: all 0.3s;" onmouseover="this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)'; this.style.borderColor='#c4b5fd';" onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e5e7eb';">
+                    <!-- Provider Header -->
+                    <div class="text-center mb-3">
+                        <div class="mx-auto mb-3" style="width: 90px; height: 90px;">
+                            {% if provider.profile_picture %}
+                                <img src="{{ provider.profile_picture }}" alt="{{ provider.business_name }}" 
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid #e5e7eb;">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center h-100" style="background: #f3e8ff; border-radius: 50%; border: 3px solid #e5e7eb;">
+                                    <i class="fas fa-cut" style="font-size: 32px; color: #7C3AED;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <h5 class="fw-bold mb-2" style="font-size: 18px; color: #111827;">
+                            <a href="{{ url_for('provider_profile', provider_id=provider.id) }}" class="text-decoration-none" style="color: #111827; transition: color 0.2s;" onmouseover="this.style.color='#7C3AED'" onmouseout="this.style.color='#111827'">
+                                {{ provider.business_name or provider.name }}
+                            </a>
+                        </h5>
+                            <div class="mb-2">
+                                {% set average_rating = provider.get('average_rating', 0) %}
+                                {% set total_reviews = provider.get('total_reviews', 0) %}
+                                {% if average_rating > 0 %}
+                                    {% set rating = average_rating %}
+                                    {% for i in range(5) %}
+                                        {% if i < rating|int %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif i < rating and rating % 1 >= 0.5 %}
+                                            <i class="fas fa-star-half-alt text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="text-muted small ms-1">{{ average_rating|round(1) }}/5.0 (<span data-translate="reviews">{{ total_reviews }} reviews</span>)</span>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                    <i class="far fa-star text-muted"></i>
+                                    <i class="far fa-star text-muted"></i>
+                                    <i class="far fa-star text-muted"></i>
+                                    <i class="far fa-star text-muted"></i>
+                                    <span class="text-muted small ms-1" data-translate="no-reviews-yet">No reviews yet</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Business Description -->
+                        {% if provider.business_description %}
+                        <p class="text-muted small mb-3">
+                            {{ provider.business_description[:150] }}{% if provider.business_description|length > 150 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Services Offered -->
+                        {% if provider.services_offered %}
+                        <div class="mb-3">
+                            <p class="small mb-2 fw-bold text-primary">
+                                <i class="fas fa-scissors me-2"></i><span data-translate="services">Services:</span>
+                            </p>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% set services_list = provider.services_offered.split(', ') %}
+                                {% for service in services_list %}
+                                    <span class="badge bg-primary">{{ service }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Contact Info -->
+                        <div class="mb-3 pb-3 border-bottom">
+                            {% if provider.address %}
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ provider.address }}
+                            </p>
+                            {% endif %}
+                            {% if provider.phone %}
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-phone me-2"></i>{{ provider.phone }}
+                            </p>
+                            {% endif %}
+                            {% if provider.email %}
+                            <p class="small text-muted mb-0">
+                                <i class="fas fa-envelope me-2"></i>{{ provider.email }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            {% if current_user and current_user.role == 'consumer' %}
+                                <a href="{{ url_for('schedule') }}?provider_id={{ provider.id }}" class="btn btn-primary">
+                                    <i class="fas fa-calendar-plus me-2"></i><span data-translate="book-appointment">Book Appointment</span>
+                                </a>
+                            {% elif not current_user %}
+                                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i><span data-translate="login-to-book">Login to Book</span>
+                                </a>
+                            {% endif %}
+                            
+                            {% if provider.phone or provider.email %}
+                            <div class="btn-group">
+                                {% if provider.phone %}
+                                <a href="tel:{{ provider.phone }}" class="btn btn-outline-success">
+                                    <i class="fas fa-phone me-1"></i><span data-translate="call">Call</span>
+                                </a>
+                                {% endif %}
+                                {% if provider.email %}
+                                <a href="mailto:{{ provider.email }}" class="btn btn-outline-info">
+                                    <i class="fas fa-envelope me-1"></i><span data-translate="email">Email</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- View Reviews Button -->
+                            {% if provider.total_reviews > 0 %}
+                            <a href="{{ url_for('provider_reviews', provider_id=provider.id) }}" class="btn btn-outline-warning">
+                                <i class="fas fa-star me-1"></i><span data-translate="view-reviews">View Reviews ({{ provider.total_reviews }})</span>
+                            </a>
+                            {% endif %}
+                            
+                            <!-- View Profile Button -->
+                            <a href="{{ url_for('provider_profile', provider_id=provider.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user me-1"></i><span data-translate="view-profile">View Profile</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- No Providers -->
+        <div class="text-center py-5">
+            <div class="card glass-effect">
+                <div class="card-body p-5">
+                    <i class="fas fa-cut fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                    <h4 class="mb-3" data-translate="no-hair-salon-providers-yet">No Hair Salon Providers Yet</h4>
+                    <p class="text-muted mb-4" data-translate="no-hair-salon-providers-description">
+                        There are currently no hair salon providers registered on our platform.
+                    </p>
+                    {% if current_user and current_user.role == 'provider' %}
+                        <p class="text-muted mb-3" data-translate="update-business-category-hair-beauty">Update your business category to "Hair & Beauty" to appear here.</p>
+                        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i><span data-translate="update-business-info">Update Business Info</span>
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-3" data-translate="are-you-hair-salon-owner">Are you a hair salon owner? Register your business today!</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i><span data-translate="register-as-provider">Register as Provider</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- No Results Message -->
+    <div id="noResults" class="text-center py-5" style="display: none;">
+        <div class="card glass-effect">
+            <div class="card-body p-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted" data-translate="no-providers-found">No providers found</h5>
+                <p class="text-muted mb-3" data-translate="try-adjusting-search-criteria">Try adjusting your search criteria</p>
+                <button class="btn btn-outline-primary" onclick="clearSearch()">
+                    <i class="fas fa-redo me-2"></i><span data-translate="clear-search">Clear Search</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('services') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i><span data-translate="back-to-all-services">Back to All Services</span>
+        </a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='provider_filter.js') }}"></script>
+{% endblock %}

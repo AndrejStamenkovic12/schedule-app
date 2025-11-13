@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ provider.business_name or provider.name }} - Reviews{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Provider Header -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            {% if provider.profile_picture %}
+                                <img src="{{ provider.profile_picture }}" alt="{{ provider.business_name }}" 
+                                     class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                     style="width: 80px; height: 80px;">
+                                    <i class="fas fa-store fa-2x text-white"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="mb-1">{{ provider.business_name or provider.name }}</h3>
+                                <p class="text-muted mb-0">{{ provider.service_category|title|replace('_', ' ') }}</p>
+                                {% if provider.business_description %}
+                                    <p class="text-muted small mb-0">{{ provider.business_description[:100] }}{% if provider.business_description|length > 100 %}...{% endif %}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if average_rating > 0 %}
+                            <div class="text-warning mb-2">
+                                {% for i in range(5) %}
+                                    {% if i < average_rating|int %}
+                                        <i class="fas fa-star fa-lg"></i>
+                                    {% elif i < average_rating %}
+                                        <i class="fas fa-star-half-alt fa-lg"></i>
+                                    {% else %}
+                                        <i class="far fa-star fa-lg"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <h4 class="mb-0">{{ "%.1f"|format(average_rating) }}/5.0</h4>
+                            <small class="text-muted">{{ total_reviews }} review{{ 's' if total_reviews != 1 else '' }}</small>
+                        {% else %}
+                            <div class="text-muted mb-2">
+                                {% for i in range(5) %}
+                                    <i class="far fa-star fa-lg"></i>
+                                {% endfor %}
+                            </div>
+                            <h4 class="mb-0 text-muted">No reviews yet</h4>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-star me-2"></i>
+                    <span data-translate="customer-reviews">Customer Reviews</span>
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-user text-primary me-1"></i>
+                                        {{ review.reviewer_name }}
+                                    </h6>
+                                    <small class="text-muted">{{ review.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                                </div>
+                                <div class="text-warning">
+                                    {% for i in range(5) %}
+                                        {% if i < review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="mb-1">
+                                <strong data-translate="service">Service:</strong> {{ review.appointment_type }}
+                            </p>
+                            {% if review.comment %}
+                                <p class="mb-0">{{ review.comment }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-star fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted" data-translate="no-reviews-yet">No reviews yet</h5>
+                        <p class="text-muted" data-translate="no-reviews-provider-message">This provider hasn't received any reviews yet. Be the first to book and leave a review!</p>
+                        {% if current_user and current_user.role == 'consumer' %}
+                            <a href="{{ url_for('schedule') }}?provider_id={{ provider.id }}" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                <span data-translate="book-an-appointment">Book an Appointment</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-4 d-flex justify-content-between">
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                <span data-translate="back">Back</span>
+            </a>
+            {% if current_user and current_user.role == 'consumer' %}
+                <a href="{{ url_for('schedule') }}?provider_id={{ provider.id }}" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus me-1"></i>
+                    <span data-translate="book-with-this-provider">Book with This Provider</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

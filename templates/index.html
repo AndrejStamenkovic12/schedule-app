@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section position-relative py-5 mb-5">
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="text-center py-5">
+        <p class="hero-subtitle mb-3" data-translate="welcome-subtitle">Book your appointments with ease</p>
+        <h1 class="display-3 mb-4 hero-title" data-translate="appointment-scheduler-title">Appointment Scheduler</h1>
+        <p class="lead mb-4 hero-description" style="max-width: 800px; margin: 0 auto; color: var(--text-secondary);" data-translate="welcome-subtitle">Book your appointments with ease</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+                    {% if current_user %}
+                <a href="{{ url_for('services') }}" class="btn btn-primary btn-lg" data-translate="get-started">Get Started</a>
+                <a href="{{ url_for('appointments') }}" class="btn btn-outline-primary btn-lg" data-translate="my-appointments">My Appointments</a>
+                    {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg" data-translate="get-started">Get Started</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg" data-translate="login">Login</a>
+                    {% endif %}
+                </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title" data-translate="services">Services</h5>
+                <p class="card-text" data-translate="services-description">Discover our premium beauty, wellness, and fitness services</p>
+                <a href="{{ url_for('services') }}" class="btn btn-sm btn-outline-primary" data-translate="explore-services">Explore Services</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title" data-translate="find-near-you">Find Near You</h5>
+                <p class="card-text" data-translate="find-near-you-description">Discover providers in your local area</p>
+                <a href="{{ url_for('find_near_you') }}" class="btn btn-sm btn-outline-primary" data-translate="find-providers">Find Providers</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title" data-translate="help-support">Help & Support</h5>
+                <p class="card-text" data-translate="help-description">Get instant help with our AI assistant and FAQ</p>
+                <a href="{{ url_for('help') }}" class="btn btn-sm btn-outline-primary" data-translate="get-support">Get Support</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title" data-translate="profile">Profile</h5>
+                <p class="card-text" data-translate="profile-description">Manage your preferences and account settings</p>
+                {% if current_user %}
+                    <a href="{{ url_for('profile') }}" class="btn btn-sm btn-outline-primary" data-translate="view-profile">View Profile</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-sm btn-outline-primary" data-translate="view-profile">View Profile</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" data-translate="upcoming-appointments">Upcoming Appointments</h5>
+        <a href="{{ url_for('appointments') }}" class="btn btn-sm btn-outline-primary" data-translate="view-all">View All</a>
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                    <div class="table-responsive">
+                <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-translate="appointment-type">Type</th>
+                                    <th data-translate="service">Service</th>
+                                    <th data-translate="date">Date</th>
+                                    <th data-translate="time">Time</th>
+                                    <th data-translate="price">Price</th>
+                                    <th data-translate="notes">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apt in appointments %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            'primary' if apt.type == 'Hair Salon' else
+                                            'success' if apt.type == 'Nail Salon' else
+                                            'info' if apt.type == 'Massage Therapy' else
+                                            'warning' if apt.type == 'Personal Training' else
+                                            'secondary' if apt.type == 'Spa Treatment' else
+                                            'dark'
+                                        }}">
+                                            {{ apt.type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if apt.get('service_name') %}
+                                            <span class="service-name-translatable" data-service-name="{{ apt.service_name }}">{{ apt.service_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted" data-translate="not-specified">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ apt.datetime.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ apt.datetime.strftime('%H:%M') }}</td>
+                                    <td>
+                                        {% if apt.get('service_cost') %}
+                                            <strong class="text-success">
+                                                {{ "%.2f"|format(apt.service_cost) }} RSD
+                                            </strong>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ apt.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                <h5 data-translate="welcome">Welcome!</h5>
+                <p class="text-muted" data-translate="create-account-message">Create an account to start booking appointments.</p>
+                        {% if current_user %}
+                    <a href="{{ url_for('services') }}" class="btn btn-primary" data-translate="browse-services">Browse Services</a>
+                        {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary" data-translate="create-account">Create Account</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

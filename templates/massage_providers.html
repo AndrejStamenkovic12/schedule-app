@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Massage Therapy Providers - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card glass-effect fade-in-up mb-4">
+        <div class="card-body p-4 text-center">
+            <i class="fas fa-spa fa-4x mb-3" style="background: var(--success-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+            <h1 class="gradient-text mb-3" data-translate="massage-therapy-providers">Massage Therapy Providers</h1>
+            <p class="text-muted mb-0" data-translate="massage-therapy-description">Swedish, deep tissue, hot stone, and therapeutic massage</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect">
+                <div class="card-body">
+                    <input type="text" class="form-control" id="searchProvider" 
+                           placeholder="Search massage providers..." 
+                           data-translate-placeholder="search-massage-providers"
+                           oninput="filterProviders()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'provider_grid.html' %}
+    
+    <div class="text-center mt-4">
+        <a href="{{ url_for('services') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i><span data-translate="back-to-services">Back to Services</span>
+        </a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='provider_filter.js') }}"></script>
+{% endblock %}

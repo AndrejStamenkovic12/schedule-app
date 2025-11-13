@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Eyebrow & Eyelash Providers - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card glass-effect fade-in-up mb-4">
+        <div class="card-body p-4 text-center">
+            <i class="fas fa-eye fa-4x mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+            <h1 class="gradient-text mb-3" data-translate="eyebrow-providers">Eyebrow & Eyelash Providers</h1>
+            <p class="text-muted mb-0" data-translate="eyebrow-description">Eyebrow shaping, lash extensions, and tinting</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchProvider" 
+                                       placeholder="Search providers by name or services..." 
+                                       data-translate-placeholder="search-eyebrow-providers"
+                                       oninput="filterProviders()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearSearch()">
+                                <i class="fas fa-redo me-2"></i><span data-translate="clear-search">Clear Search</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Providers Grid -->
+    {% if providers %}
+        <div class="row g-4 mb-4" id="providersGrid">
+            {% for provider in providers %}
+            <div class="col-md-6 col-lg-4 provider-card" 
+                 data-name="{{ (provider.business_name or provider.name)|lower }}"
+                 data-services="{{ provider.services_offered|lower }}">
+                <div class="card glass-effect hover-card h-100 fade-in-up" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                    <div class="card-body p-4">
+                        <!-- Provider Header -->
+                        <div class="text-center mb-3">
+                            <div class="profile-avatar mx-auto mb-3" style="width: 90px; height: 90px;">
+                                {% if provider.profile_picture %}
+                                    <img src="{{ provider.profile_picture }}" alt="{{ provider.business_name }}" 
+                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                    <i class="fas fa-eye fa-2x"></i>
+                                {% endif %}
+                            </div>
+                            <h5 class="fw-bold mb-2">{{ provider.business_name or provider.name }}</h5>
+                            <div class="mb-2">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star-half-alt text-warning"></i>
+                                <span class="text-muted small ms-1">4.5/5.0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Business Description -->
+                        {% if provider.business_description %}
+                        <p class="text-muted small mb-3">
+                            {{ provider.business_description[:150] }}{% if provider.business_description|length > 150 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Services Offered -->
+                        {% if provider.services_offered %}
+                        <div class="mb-3">
+                            <p class="small mb-2 fw-bold text-primary">
+                                <i class="fas fa-concierge-bell me-2"></i><span data-translate="services">Services:</span>
+                            </p>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% set services_list = provider.services_offered.split(', ') %}
+                                {% for service in services_list %}
+                                    <span class="badge bg-primary">{{ service }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Contact Info -->
+                        <div class="mb-3 pb-3 border-bottom">
+                            {% if provider.address %}
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ provider.address }}
+                            </p>
+                            {% endif %}
+                            {% if provider.phone %}
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-phone me-2"></i>{{ provider.phone }}
+                            </p>
+                            {% endif %}
+                            {% if provider.email %}
+                            <p class="small text-muted mb-0">
+                                <i class="fas fa-envelope me-2"></i>{{ provider.email }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            {% if current_user and current_user.role != 'provider' %}
+                                <a href="{{ url_for('schedule') }}?provider_id={{ provider.id }}" class="btn btn-primary">
+                                    <i class="fas fa-calendar-plus me-2"></i><span data-translate="book-appointment">Book Appointment</span>
+                                </a>
+                            {% elif not current_user %}
+                                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i><span data-translate="login-to-book">Login to Book</span>
+                                </a>
+                            {% endif %}
+                            
+                            {% if provider.phone or provider.email %}
+                            <div class="btn-group">
+                                {% if provider.phone %}
+                                <a href="tel:{{ provider.phone }}" class="btn btn-outline-success">
+                                    <i class="fas fa-phone me-1"></i><span data-translate="call">Call</span>
+                                </a>
+                                {% endif %}
+                                {% if provider.email %}
+                                <a href="mailto:{{ provider.email }}" class="btn btn-outline-info">
+                                    <i class="fas fa-envelope me-1"></i><span data-translate="email">Email</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- No Providers -->
+        <div class="text-center py-5">
+            <div class="card glass-effect">
+                <div class="card-body p-5">
+                    <i class="fas fa-eye fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                    <h4 class="mb-3" data-translate="no-eyebrow-providers-yet">No Eyebrow & Eyelash Providers Yet</h4>
+                    <p class="text-muted mb-4" data-translate="no-eyebrow-providers-description">
+                        There are currently no eyebrow & eyelash providers registered on our platform.
+                    </p>
+                    {% if current_user and current_user.role == 'provider' %}
+                        <p class="text-muted mb-3" data-translate="update-service-type-eyebrow">Update your service type to "Eyebrow & Eyelash" to appear here.</p>
+                        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i><span data-translate="update-business-info">Update Business Info</span>
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-3" data-translate="are-you-eyebrow-specialist">Are you an eyebrow & eyelash specialist? Register your business today!</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i><span data-translate="register-as-provider">Register as Provider</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- No Results Message -->
+    <div id="noResults" class="text-center py-5" style="display: none;">
+        <div class="card glass-effect">
+            <div class="card-body p-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted" data-translate="no-providers-found">No providers found</h5>
+                <p class="text-muted mb-3" data-translate="try-adjusting-search-criteria">Try adjusting your search criteria</p>
+                <button class="btn btn-outline-primary" onclick="clearSearch()">
+                    <i class="fas fa-redo me-2"></i><span data-translate="clear-search">Clear Search</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('services') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i><span data-translate="back-to-all-services">Back to All Services</span>
+        </a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='provider_filter.js') }}"></script>
+{% endblock %}

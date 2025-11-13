@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Appointment - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<style>
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    .input-group .is-invalid {
+        border-right: none !important;
+    }
+    .input-group-text.text-danger {
+        background-color: #fff;
+        border-color: #dc3545;
+    }
+    
+    
+    /* Completely remove browser validation icons for all browsers */
+    input::-webkit-validation-bubble-message,
+    select::-webkit-validation-bubble-message,
+    input::-webkit-validation-bubble-icon,
+    select::-webkit-validation-bubble-icon {
+        display: none !important;
+    }
+    
+    /* Remove validation styling for all browsers */
+    input:invalid, select:invalid {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    
+    /* Hide validation bubbles */
+    input:invalid::-webkit-validation-bubble,
+    select:invalid::-webkit-validation-bubble {
+        display: none !important;
+    }
+    
+    /* Remove background validation icons and styling */
+    .form-control:invalid, .form-select:invalid {
+        background-image: none !important;
+        background-size: 0 !important;
+        padding-right: 0.75rem !important;
+        box-shadow: none !important;
+    }
+    
+    /* Specifically target select elements */
+    select.form-select:invalid {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+    }
+    
+    /* Date input styling to make it look like a picker */
+    input[type="date"] {
+        cursor: pointer;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 1;
+        filter: invert(0.5);
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+        filter: invert(0.3);
+    }
+    
+    /* Style date input to indicate it's a picker */
+    input[type="date"] {
+        background-color: #fff;
+        cursor: pointer;
+    }
+    
+    /* Dark theme support for date picker */
+    [data-theme="dark"] input[type="date"] {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+    
+    /* Time input styling to make it look like a picker */
+    input[type="time"] {
+        cursor: pointer;
+        background-color: #fff;
+    }
+    
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 1;
+        filter: invert(0.5);
+    }
+    
+    input[type="time"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+        filter: invert(0.3);
+    }
+    
+    /* Dark theme support for time picker */
+    [data-theme="dark"] input[type="time"] {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+</style>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border" style="background: white; border-color: #e5e7eb !important; border-radius: 16px; overflow: hidden;">
+            <div class="d-flex align-items-center" style="padding: 24px; background: #7C3AED; color: white;">
+                <div>
+                    <h4 class="mb-0 fw-bold" id="pageTitle" style="font-size: 20px;">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        <span data-translate="schedule-new-appointment">Schedule New Appointment</span>
+                    </h4>
+                    <div id="providerInfo" class="mt-2" style="display:none;">
+                        <h6 class="mb-1 fw-semibold" id="providerName" style="font-size: 14px; opacity: 0.9;"></h6>
+                        <p class="mb-0 small opacity-75" id="serviceType" style="font-size: 12px;"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 32px;">
+                
+                <form method="POST" action="{{ url_for('add_appointment') }}" id="appointmentForm" novalidate>
+                    <!-- Hidden fields for provider booking -->
+                    <input type="hidden" id="type" name="type" value="other">
+                    <input type="hidden" id="provider_id" name="provider_id" value="{{ provider_id or '' }}">
+                    
+                    <!-- Booking Form (only available when coming from provider page) -->
+                    <div id="bookingForm" class="row" {% if not provider_id %}style="display:none;"{% endif %}>
+                        <!-- Service Selection -->
+                        <div class="col-12 mb-3">
+                            <label for="service_id" class="form-label">
+                                <i class="fas fa-concierge-bell me-1"></i><span data-translate="select-service">Select Service</span>
+                            </label>
+                            <select class="form-select" id="service_id" name="service_id" required>
+                                <option value="" data-translate="choose-service">Choose a service...</option>
+                                <!-- Services will be populated by JavaScript -->
+                            </select>
+                            <div class="form-text" data-translate="select-service-you-like">Select the service you'd like to book</div>
+                        </div>
+                        
+                        <!-- Date and Time Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i><span data-translate="date">Date</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="date" name="date" style="cursor: pointer;">
+                                <span class="input-group-text" style="cursor: pointer; background-color: #f8f9fa;" id="datePickerBtn">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
+                                <span class="input-group-text text-danger" id="date_error" style="display:none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">
+                                <i class="fas fa-clock me-1"></i><span data-translate="time">Time</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" id="time" name="time" style="cursor: pointer;">
+                                <span class="input-group-text" style="cursor: pointer; background-color: #f8f9fa;" id="timePickerBtn">
+                                    <i class="fas fa-clock"></i>
+                                </span>
+                                <span class="input-group-text text-danger" id="time_error" style="display:none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Provider Schedule Display -->
+                        <div class="col-12 mb-3">
+                            <div id="providerSchedule" style="display:none;">
+                                <div class="card">
+                                    <div class="card-header bg-light py-2">
+                                        <small class="fw-bold">
+                                            <i class="fas fa-calendar-alt me-1"></i><span data-translate="provider-working-hours">Provider Working Hours</span>
+                                        </small>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div id="scheduleList" class="d-flex flex-wrap gap-2 justify-content-center">
+                                            <!-- Working days will be displayed here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes field moved inside booking form -->
+                        <div class="col-12 mb-3">
+                            <label for="notes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i><span data-translate="notes-optional">Notes (Optional)</span>
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Add any special notes or requirements..." data-translate-placeholder="add-special-notes"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Message for direct access -->
+                    <div id="noProviderMessage" class="text-center py-5" {% if provider_id %}style="display:none;"{% endif %}>
+                        <i class="fas fa-info-circle fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted mb-3" data-translate="no-provider-selected">No Provider Selected</h4>
+                        <p class="text-muted mb-4" data-translate="schedule-appointment-message">
+                            To schedule an appointment, please first browse our services and select a provider.
+                        </p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i><span data-translate="browse-services-providers">Browse Services & Providers</span>
+                        </a>
+                    </div>
+                    
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end" id="formActions" {% if not provider_id %}style="display:none;"{% endif %}>
+                        {% if provider_id %}
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i><span data-translate="cancel">Cancel</span>
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i><span data-translate="cancel">Cancel</span>
+                            </a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-check me-1"></i><span data-translate="schedule-appointment">Schedule Appointment</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <span data-translate="tips-for-scheduling">Tips for Scheduling</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong data-translate="provider-selection">Provider Selection:</strong> <span data-translate="choose-provider-availability">Choose a specific provider to see their availability</span>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong data-translate="time-slots">Time Slots:</strong> <span data-translate="select-date-time-hours">Select a date and time within provider working hours</span>
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong data-translate="confirmation">Confirmation:</strong> <span data-translate="provider-confirm-request">Provider will confirm your appointment request</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function showProviderSchedule(providerId, availability) {
+    const providerSchedule = document.getElementById('providerSchedule');
+    const scheduleList = document.getElementById('scheduleList');
+    
+    if (!providerId) {
+        providerSchedule.style.display = 'none';
+        return;
+    }
+    
+    // Check if availability exists
+    if (!availability || typeof availability !== 'object') {
+        console.log('No availability object for provider:', providerId);
+        providerSchedule.style.display = 'none';
+        return;
+    }
+    
+    // Build schedule display (horizontal) - show even if some days are missing
+    const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    // Day abbreviations - will be translated based on language
+    const dayNamesDisplay = {
+        'en': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'sr': ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
+    };
+    const currentLang = localStorage.getItem('language') || 'en';
+    const dayAbbr = dayNamesDisplay[currentLang] || dayNamesDisplay['en'];
+    
+    let scheduleHTML = '';
+    
+    dayNames.forEach((day, index) => {
+        const dayInfo = availability[day];
+        const isAvailable = dayInfo && dayInfo.enabled === true;
+        const bgClass = isAvailable ? 'bg-success' : 'bg-secondary';
+        const startTime = dayInfo && dayInfo.start ? dayInfo.start : '';
+        const endTime = dayInfo && dayInfo.end ? dayInfo.end : '';
+        
+        scheduleHTML += `
+            <div class="text-center" style="min-width: 80px;">
+                <div class="badge ${bgClass} mb-1 w-100">${dayAbbr[index]}</div>
+                <div class="small ${isAvailable ? 'text-success' : 'text-muted'}">
+                    ${isAvailable ? `${startTime}<br>${endTime}` : (window.translations && window.translations[currentLang] && window.translations[currentLang]['closed'] ? window.translations[currentLang]['closed'] : 'Closed')}
+                </div>
+            </div>
+        `;
+    });
+    
+    scheduleList.innerHTML = scheduleHTML;
+    providerSchedule.style.display = 'block';
+    console.log('Provider schedule displayed for provider:', providerId);
+}
+
+
+
+// Provider selection is now only done through provider pages
+
+// Set minimum date to today and handle URL parameters
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Schedule page DOM loaded');
+    
+    const dateInput = document.getElementById('date');
+    const datePickerBtn = document.getElementById('datePickerBtn');
+    
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+        
+        // Function to open date picker
+        function openDatePicker() {
+            if (dateInput.showPicker) {
+                try {
+                    dateInput.showPicker();
+                } catch (error) {
+                    // Fallback if showPicker fails
+                    dateInput.focus();
+                    dateInput.click();
+                }
+            } else {
+                // Fallback for browsers that don't support showPicker()
+                dateInput.focus();
+                dateInput.click();
+            }
+        }
+        
+        // Make date input open picker on click
+        dateInput.addEventListener('click', function(e) {
+            e.preventDefault();
+            openDatePicker();
+        });
+        
+        // Make calendar icon button open picker
+        if (datePickerBtn) {
+            datePickerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openDatePicker();
+            });
+        }
+        
+        // Prevent manual typing - only allow selection through picker
+        dateInput.addEventListener('keydown', function(e) {
+            // Allow: tab, escape, enter (for navigation)
+            if ([9, 27, 13].indexOf(e.keyCode) !== -1) {
+                return;
+            }
+            // Allow: Arrow keys for navigation within picker
+            if ([37, 38, 39, 40].indexOf(e.keyCode) !== -1) {
+                return;
+            }
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X (for copy/paste)
+            if ((e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88) && e.ctrlKey === true) {
+                return;
+            }
+            // Prevent all other typing
+            e.preventDefault();
+            // Open picker instead
+            openDatePicker();
+        });
+        
+        // Prevent paste of text
+        dateInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            openDatePicker();
+        });
+        
+        // Prevent direct input
+        dateInput.addEventListener('input', function(e) {
+            // Only allow if it's a valid date format (from picker selection)
+            const value = e.target.value;
+            if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                e.target.value = '';
+                openDatePicker();
+            }
+        });
+    }
+    
+    // Handle time input picker
+    const timeInput = document.getElementById('time');
+    const timePickerBtn = document.getElementById('timePickerBtn');
+    
+    if (timeInput) {
+        // Function to open time picker
+        function openTimePicker() {
+            if (timeInput.showPicker) {
+                try {
+                    timeInput.showPicker();
+                } catch (error) {
+                    // Fallback if showPicker fails
+                    timeInput.focus();
+                    timeInput.click();
+                }
+            } else {
+                // Fallback for browsers that don't support showPicker()
+                timeInput.focus();
+                timeInput.click();
+            }
+        }
+        
+        // Make time input open picker on click
+        timeInput.addEventListener('click', function(e) {
+            e.preventDefault();
+            openTimePicker();
+        });
+        
+        // Make clock icon button open picker
+        if (timePickerBtn) {
+            timePickerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openTimePicker();
+            });
+        }
+        
+        // Prevent manual typing - only allow selection through picker
+        timeInput.addEventListener('keydown', function(e) {
+            // Allow: tab, escape, enter (for navigation)
+            if ([9, 27, 13].indexOf(e.keyCode) !== -1) {
+                return;
+            }
+            // Allow: Arrow keys for navigation within picker
+            if ([37, 38, 39, 40].indexOf(e.keyCode) !== -1) {
+                return;
+            }
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X (for copy/paste)
+            if ((e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88) && e.ctrlKey === true) {
+                return;
+            }
+            // Prevent all typing - force picker selection only
+            e.preventDefault();
+            // Open picker instead
+            openTimePicker();
+        });
+        
+        // Prevent paste of invalid text
+        timeInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            openTimePicker();
+        });
+        
+        // Validate time format on input
+        timeInput.addEventListener('input', function(e) {
+            // Only allow if it's a valid time format (HH:MM)
+            const value = e.target.value;
+            if (value && !/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+                // If invalid format, try to open picker
+                e.target.value = '';
+                openTimePicker();
+            }
+        });
+    }
+    
+    // Check if provider is pre-selected (from URL parameter or server-side)
+    const urlParams = new URLSearchParams(window.location.search);
+    const providerIdFromUrl = urlParams.get('provider_id');
+    const providerIdInput = document.getElementById('provider_id');
+    const providerIdFromForm = providerIdInput ? providerIdInput.value : '';
+    const providerId = providerIdFromUrl || providerIdFromForm;
+    
+    console.log('Provider ID from URL:', providerIdFromUrl, 'From form:', providerIdFromForm, 'Final:', providerId);
+    
+    if (providerId) {
+        // Coming from provider page - ensure booking form and provider info are visible
+        const bookingForm = document.getElementById('bookingForm');
+        const noProviderMessage = document.getElementById('noProviderMessage');
+        const providerInfo = document.getElementById('providerInfo');
+        const formActions = document.getElementById('formActions');
+        
+        if (bookingForm) bookingForm.style.display = 'block';
+        if (noProviderMessage) noProviderMessage.style.display = 'none';
+        if (providerInfo) providerInfo.style.display = 'block';
+        if (formActions) formActions.style.display = 'flex';
+        
+        // Set hidden provider field
+        if (providerIdInput) {
+            providerIdInput.value = providerId;
+        }
+        
+        // Get provider data from the providers data passed to template
+        const providers = JSON.parse('{{ providers|tojson|safe }}');
+        const providerIdNum = parseInt(providerId);
+        
+        console.log('Looking for provider ID:', providerId, 'Parsed:', providerIdNum);
+        console.log('Total providers available:', providers.length);
+        console.log('Available providers:', providers.map(p => ({id: p.id, type: typeof p.id, name: p.business_name || p.name, servicesCount: (p.services || []).length})));
+        
+        // Try to find provider - check both string and number comparison
+        let selectedProvider = providers.find(function(p) { 
+            // Try multiple comparison methods
+            const pId = p.id;
+            const searchId = providerIdNum;
+            return pId === searchId || 
+                   pId == searchId || 
+                   String(pId) === String(providerId) ||
+                   String(pId) === String(searchId);
+        });
+        
+        // If still not found, log for debugging
+        if (!selectedProvider) {
+            console.error('Provider not found. Looking for ID:', providerId, 'Parsed:', providerIdNum);
+            console.error('Available providers:', providers.map(p => ({id: p.id, type: typeof p.id, name: p.business_name || p.name})));
+            // Don't proceed if provider not found
+            return;
+        }
+        
+        console.log('Found provider:', selectedProvider);
+        
+        // Process provider data
+        try {
+            const providerName = selectedProvider.business_name || selectedProvider.name;
+            const category = selectedProvider.service_category;
+            const availability = selectedProvider.availability || {};
+            const services = selectedProvider.services || [];
+            
+            console.log('Selected provider:', {
+                id: selectedProvider.id,
+                name: providerName,
+                category: category,
+                services: services,
+                servicesCount: services.length,
+                availability: availability,
+                availabilityKeys: Object.keys(availability).length
+            });
+            
+            // Double-check services - sometimes it might be stored differently
+            let actualServices = services;
+            if (!Array.isArray(actualServices)) {
+                console.warn('Services is not an array, attempting to convert:', typeof actualServices);
+                if (actualServices && typeof actualServices === 'object') {
+                    actualServices = Object.values(actualServices);
+                } else {
+                    actualServices = [];
+                }
+            }
+            
+            console.log('Final services array:', actualServices, 'Length:', actualServices.length);
+            
+            // Map category to appointment type
+            const typeMapping = {
+                'hair_salon': 'Hair Salon',
+                'nail_salon': 'Nail Salon',
+                'massage_therapy': 'Massage Therapy',
+                'personal_training': 'Personal Training',
+                'spa_treatment': 'Spa Treatment',
+                'yoga_classes': 'Yoga Classes',
+                'pilates': 'Pilates',
+                'dermatology': 'Dermatology',
+                'physical_therapy': 'Physical Therapy',
+                'nutrition_counseling': 'Nutrition Counseling',
+                'makeup_artist': 'Makeup Artist',
+                'photography': 'Photography',
+                'life_coaching': 'Life Coaching',
+                'aromatherapy': 'Aromatherapy',
+                'eyebrow_eyelash': 'Eyebrow & Eyelash'
+            };
+            
+            // Get language preference once for all translations
+            const lang = localStorage.getItem('language') || 'en';
+            
+            // Get translation for "General Service" if needed
+            const generalServiceText = (window.translations && window.translations[lang] && window.translations[lang]['general-service']) 
+                ? window.translations[lang]['general-service']
+                : 'General Service';
+            const appointmentType = typeMapping[category] || generalServiceText;
+            document.getElementById('type').value = category;
+            
+            // Display in header
+            document.getElementById('providerName').textContent = providerName;
+            document.getElementById('serviceType').textContent = appointmentType;
+            
+            // Populate services dropdown
+            const serviceSelect = document.getElementById('service_id');
+            
+            if (!serviceSelect) {
+                console.error('Service select element not found!');
+                return;
+            }
+            
+            // Get translation for "Choose a service..."
+            const chooseServiceText = (window.translations && window.translations[lang] && window.translations[lang]['choose-service']) 
+                ? window.translations[lang]['choose-service']
+                : 'Choose a service...';
+            
+            // Clear existing options except the first one
+            serviceSelect.innerHTML = `<option value="">${chooseServiceText}</option>`;
+            
+            console.log('Services for provider:', actualServices);
+            console.log('Services type:', typeof actualServices, 'Is array:', Array.isArray(actualServices), 'Length:', actualServices ? actualServices.length : 0);
+            console.log('Service select element found:', serviceSelect);
+            
+            if (actualServices && Array.isArray(actualServices) && actualServices.length > 0) {
+                console.log('Populating dropdown with', actualServices.length, 'services');
+                actualServices.forEach(function(service) {
+                    console.log('Processing service:', service);
+                    const option = document.createElement('option');
+                    
+                    // Ensure service has required fields
+                    if (!service.id || !service.name || service.cost === undefined) {
+                        console.warn('Service missing required fields:', service);
+                        return;
+                    }
+                    
+                    option.value = service.id;
+                    
+                    // Get translation for service name (lang already declared above)
+                    const translationKey = 'service-name-' + service.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    
+                    // Get translations object from base.html (will be available globally)
+                    let translatedName = service.name;
+                    if (window.translations && window.translations[lang] && window.translations[lang][translationKey]) {
+                        translatedName = window.translations[lang][translationKey];
+                    }
+                    
+                    const cost = parseFloat(service.cost) || 0;
+                    const currency = service.currency || 'RSD';
+                    option.textContent = `${translatedName} - ${cost.toFixed(2)} ${currency}`;
+                    option.setAttribute('data-cost', cost);
+                    option.setAttribute('data-currency', currency);
+                    option.setAttribute('data-name', service.name);
+                    serviceSelect.appendChild(option);
+                });
+                
+                console.log('Successfully added', actualServices.length, 'services to dropdown');
+            } else {
+                // No services available, show message
+                const option = document.createElement('option');
+                option.value = '';
+                
+                // Get translation for "No services available" (lang already declared above)
+                let noServicesText = 'No services available';
+                if (window.translations && window.translations[lang] && window.translations[lang]['no-services-available']) {
+                    noServicesText = window.translations[lang]['no-services-available'];
+                }
+                
+                option.textContent = noServicesText;
+                option.disabled = true;
+                serviceSelect.appendChild(option);
+            }
+            
+            // Show provider schedule with availability data
+            console.log('Calling showProviderSchedule with:', {providerId: providerIdNum, availability: availability});
+            showProviderSchedule(providerIdNum, availability);
+            
+            // Translate service names after populating dropdown
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            if (window.translateServiceNames) {
+                window.translateServiceNames(savedLanguage);
+            }
+        } catch (error) {
+            console.error('Error processing provider data:', error);
+            console.error('Error stack:', error.stack);
+        }
+        
+    } else {
+        // No provider selected - show message to browse services
+        document.getElementById('bookingForm').style.display = 'none';
+        document.getElementById('noProviderMessage').style.display = 'block';
+        document.getElementById('providerInfo').style.display = 'none';
+    }
+});
+
+// Function to check if date/time is within provider availability
+function isWithinAvailability(dateValue, timeValue, availability) {
+    if (!availability || !dateValue || !timeValue) {
+        return true; // If no availability set, allow booking
+    }
+    
+    // Parse the date to get day of week
+    const selectedDate = new Date(dateValue + 'T00:00:00');
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[selectedDate.getDay()];
+    
+    // Get day availability
+    const dayAvailability = availability[dayName];
+    if (!dayAvailability || !dayAvailability.enabled) {
+        return false; // Day is not available
+    }
+    
+    // Parse start and end times
+    const startTime = dayAvailability.start || '09:00';
+    const endTime = dayAvailability.end || '17:00';
+    
+    // Convert times to minutes since midnight for easier comparison
+    function timeToMinutes(timeStr) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+    
+    const appointmentStartMinutes = timeToMinutes(timeValue);
+    const availabilityStartMinutes = timeToMinutes(startTime);
+    const availabilityEndMinutes = timeToMinutes(endTime);
+    
+    // Check if appointment time is within availability window
+    return appointmentStartMinutes >= availabilityStartMinutes && 
+           appointmentStartMinutes < availabilityEndMinutes;
+}
+
+// Clear error indicator
+function clearError(fieldId) {
+    const errorIcon = document.getElementById(fieldId + '_error');
+    const field = document.getElementById(fieldId);
+    if (errorIcon) errorIcon.style.display = 'none';
+    if (field) field.classList.remove('is-invalid');
+}
+
+// Show error indicator
+function showError(fieldId) {
+    const errorIcon = document.getElementById(fieldId + '_error');
+    const field = document.getElementById(fieldId);
+    if (errorIcon) errorIcon.style.display = 'block';
+    if (field) field.classList.add('is-invalid');
+}
+
+// Add input listeners to clear errors when user starts typing
+['date', 'time'].forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.addEventListener('change', function() {
+            clearError(fieldId);
+        });
+        field.addEventListener('input', function() {
+            clearError(fieldId);
+        });
+    }
+});
+
+// Custom form validation
+document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Clear all previous errors
+    ['type', 'date', 'time'].forEach(clearError);
+    
+    // No need to validate appointment type since it's auto-filled from provider
+    
+    // Validate date
+    const dateInput = document.getElementById('date');
+    if (!dateInput.value) {
+        showError('date');
+        isValid = false;
+    }
+    
+    // Validate time
+    const timeInput = document.getElementById('time');
+    if (!timeInput.value) {
+        showError('time');
+        isValid = false;
+    }
+    
+    // If basic validation failed, stop here
+    if (!isValid) {
+        e.preventDefault();
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+    }
+    
+    // Check provider availability if provider is selected
+    const providerId = document.getElementById('provider_id').value;
+    if (providerId) {
+        const providers = JSON.parse('{{ providers|tojson|safe }}');
+        const selectedProvider = providers.find(function(p) { return p.id == providerId; });
+        
+        if (selectedProvider && selectedProvider.availability) {
+            const availability = selectedProvider.availability;
+            const dateValue = dateInput.value;
+            const timeValue = timeInput.value;
+            
+            // Check if selected time is within provider availability
+            if (!isWithinAvailability(dateValue, timeValue, availability)) {
+                e.preventDefault();
+                
+                // Show error message - translated
+                const lang = localStorage.getItem('language') || 'en';
+                const errorMsg = (window.translations && window.translations[lang] && window.translations[lang]['time-slot-outside-availability']) 
+                    ? window.translations[lang]['time-slot-outside-availability']
+                    : 'This time slot is outside of the provider\'s availability. Please choose a different date and time.';
+                alert(errorMsg);
+                
+                // Highlight the date and time fields
+                showError('date');
+                showError('time');
+                
+                // Scroll to date/time fields
+                dateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                return false;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment Management - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    <span data-translate="appointment-management">Appointment Management</span>
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Pending Appointments -->
+                {% if pending_appointments %}
+                <div class="mb-5">
+                    <h5 class="mb-3 text-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        <span data-translate="pending-requests">Pending Requests</span> ({{ pending_appointments|length }})
+                    </h5>
+                    <div class="row g-3">
+                        {% for apt in pending_appointments %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">{{ apt.customer_name }}</h6>
+                                        <span class="badge bg-warning text-dark"><span data-translate="pending">Pending</span></span>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <strong>{{ apt.type }}</strong>
+                                        {% if apt.get('service_name') %}
+                                            <br><small class="text-muted">
+                                                <span class="service-name-translatable" data-service-name="{{ apt.service_name }}">{{ apt.service_name }}</span>
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if apt.get('service_cost') %}
+                                    <div class="mb-2">
+                                        <strong class="text-success">
+                                            <i class="fas fa-coins me-1"></i>
+                                            {{ "%.2f"|format(apt.service_cost) }} RSD
+                                        </strong>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="mb-2">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ apt.datetime.strftime('%B %d, %Y') }}
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ apt.datetime.strftime('%I:%M %p') }}
+                                    </div>
+                                    
+                                    {% if apt.notes %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <strong data-translate="notes-label">Notes:</strong> {{ apt.notes }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if apt.customer_phone %}
+                                    <div class="mb-2">
+                                        <i class="fas fa-phone me-1"></i>
+                                        <a href="tel:{{ apt.customer_phone }}">{{ apt.customer_phone }}</a>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if apt.customer_email %}
+                                    <div class="mb-3">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        <a href="mailto:{{ apt.customer_email }}">{{ apt.customer_email }}</a>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-success btn-sm" onclick="confirmAppointment({{ apt.id }})">
+                                            <i class="fas fa-check me-1"></i><span data-translate="confirm">Confirm</span>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="declineAppointment({{ apt.id }})">
+                                            <i class="fas fa-times me-1"></i><span data-translate="decline">Decline</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Confirmed Appointments -->
+                {% if confirmed_appointments %}
+                <div class="mb-5">
+                    <h5 class="mb-3 text-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span data-translate="confirmed-appointments">Confirmed Appointments</span> ({{ confirmed_appointments|length }})
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-translate="customer">Customer</th>
+                                    <th data-translate="service">Service</th>
+                                    <th data-translate="date-time">Date & Time</th>
+                                    <th data-translate="price">Price</th>
+                                    <th data-translate="contact">Contact</th>
+                                    <th data-translate="actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apt in confirmed_appointments %}
+                                <tr>
+                                    <td>{{ apt.customer_name }}</td>
+                                    <td>
+                                        {{ apt.type }}
+                                        {% if apt.get('service_name') %}
+                                            <br><small class="text-muted">
+                                                <span class="service-name-translatable" data-service-name="{{ apt.service_name }}">{{ apt.service_name }}</span>
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ apt.datetime.strftime('%B %d, %Y') }}<br>
+                                        <small class="text-muted">{{ apt.datetime.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if apt.get('service_cost') %}
+                                            <strong class="text-success">
+                                                {{ "%.2f"|format(apt.service_cost) }} RSD
+                                            </strong>
+                                        {% else %}
+                                            <span class="text-muted" data-translate="not-specified">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if apt.customer_phone %}
+                                            <a href="tel:{{ apt.customer_phone }}">{{ apt.customer_phone }}</a><br>
+                                        {% endif %}
+                                        {% if apt.customer_email %}
+                                            <a href="mailto:{{ apt.customer_email }}">{{ apt.customer_email }}</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if apt.datetime <= now %}
+                                            <button class="btn btn-primary btn-sm" onclick="completeAppointment({{ apt.id }})">
+                                                <i class="fas fa-check me-1"></i><span data-translate="complete">Complete</span>
+                                            </button>
+                                        {% else %}
+                                            <small class="text-muted" data-translate="upcoming">Upcoming</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Completed Appointments -->
+                {% if completed_appointments %}
+                <div class="mb-4">
+                    <h5 class="mb-3 text-info">
+                        <i class="fas fa-history me-2"></i>
+                        <span data-translate="completed-appointments">Completed Appointments</span> ({{ completed_appointments|length }})
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-translate="customer">Customer</th>
+                                    <th data-translate="service">Service</th>
+                                    <th data-translate="date-time">Date & Time</th>
+                                    <th data-translate="price">Price</th>
+                                    <th data-translate="actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apt in completed_appointments %}
+                                <tr>
+                                    <td>{{ apt.customer_name }}</td>
+                                    <td>
+                                        {{ apt.type }}
+                                        {% if apt.get('service_name') %}
+                                            <br><small class="text-muted">
+                                                <span class="service-name-translatable" data-service-name="{{ apt.service_name }}">{{ apt.service_name }}</span>
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ apt.datetime.strftime('%B %d, %Y') }}<br>
+                                        <small class="text-muted">{{ apt.datetime.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if apt.get('service_cost') %}
+                                            <strong class="text-success">
+                                                {{ "%.2f"|format(apt.service_cost) }} RSD
+                                            </strong>
+                                        {% else %}
+                                            <span class="text-muted" data-translate="not-specified">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('review_appointment', appointment_id=apt.id) }}" 
+                                           class="btn btn-outline-warning btn-sm"
+                                           title="" data-translate-title="review-customer-title">
+                                            <i class="fas fa-star"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- No Appointments Message -->
+                {% if not pending_appointments and not confirmed_appointments and not completed_appointments %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted" data-translate="no-appointments-yet">No appointments yet</h5>
+                    <p class="text-muted" data-translate="appointment-requests-will-appear">Appointment requests from customers will appear here.</p>
+                </div>
+                {% endif %}
+
+                <!-- Navigation -->
+                <div class="mt-4">
+                    <a href="{{ url_for('profile') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        <span data-translate="back-to-profile">Back to Profile</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getTranslation(key) {
+    const lang = localStorage.getItem('language') || 'en';
+    const translations = {
+        'en': {
+            'confirm-appointment-question': 'Are you sure you want to confirm this appointment?',
+            'decline-appointment-question': 'Are you sure you want to decline this appointment?',
+            'mark-completed-question': 'Mark this appointment as completed?'
+        },
+        'sr': {
+            'confirm-appointment-question': 'Da li ste sigurni da želite da potvrdite ovaj termin?',
+            'decline-appointment-question': 'Da li ste sigurni da želite da odbijete ovaj termin?',
+            'mark-completed-question': 'Označiti ovaj termin kao završen?'
+        }
+    };
+    return translations[lang] && translations[lang][key] ? translations[lang][key] : translations['en'][key] || key;
+}
+
+function confirmAppointment(appointmentId) {
+    if (confirm(getTranslation('confirm-appointment-question'))) {
+        fetch(`/appointment/${appointmentId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error confirming appointment: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error confirming appointment. Please try again.');
+        });
+    }
+}
+
+function declineAppointment(appointmentId) {
+    if (confirm(getTranslation('decline-appointment-question'))) {
+        fetch(`/appointment/${appointmentId}/decline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error declining appointment: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error declining appointment. Please try again.');
+        });
+    }
+}
+
+function completeAppointment(appointmentId) {
+    if (confirm(getTranslation('mark-completed-question'))) {
+        fetch(`/appointment/${appointmentId}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error completing appointment: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error completing appointment. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

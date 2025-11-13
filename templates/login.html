@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0" data-translate="login">Login</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label" data-translate="username-email">Username or Email</label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Enter your username or email" 
+                               data-translate-placeholder="enter-username-or-email"
+                               autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label" data-translate="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Enter your password"
+                               data-translate-placeholder="enter-your-password">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" data-translate="login">Login</button>
+                    </div>
+                </form>
+                <hr class="dark-divider">
+                <div class="text-center">
+                    <p class="mb-0 dark-text-secondary" data-translate="dont-have-account">Don't have an account?</p>
+                    <a href="{{ url_for('register') }}" class="dark-link" data-translate="create-one-now">Create one now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

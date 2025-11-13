@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0" data-translate="create-account">Create Account</h4>
+            </div>
+            <div class="card-body">
+                <p class="dark-text-secondary mb-4" data-translate="join-as-customer-or-provider">Join us as a customer or service provider</p>
+                    
+                    <form method="POST" id="registerForm">
+                        <!-- Account Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold" data-translate="i-am-a">I am a:</label>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="account-type-card" data-role="consumer" onclick="selectAccountType('consumer')">
+                                        <div class="text-center p-3">
+                                            <i class="fas fa-user fa-3x mb-2"></i>
+                                            <h6 data-translate="customer">Customer</h6>
+                                            <p class="small text-muted mb-0" data-translate="book-appointments">Book appointments</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="account-type-card" data-role="provider" onclick="selectAccountType('provider')">
+                                        <div class="text-center p-3">
+                                            <i class="fas fa-store fa-3x mb-2"></i>
+                                            <h6 data-translate="provider">Provider</h6>
+                                            <p class="small text-muted mb-0" data-translate="offer-services">Offer services</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="role" name="role" value="consumer" required>
+                        </div>
+                        
+                        <!-- Common Fields -->
+                        <div id="commonFields">
+                            <div class="mb-3">
+                                <label for="username" class="form-label" data-translate="username">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" required 
+                                       placeholder="Choose a username"
+                                       data-translate-placeholder="choose-username">
+                            </div>
+                            
+                            <!-- Customer-specific fields -->
+                            <div id="customerFields">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label" data-translate="full-name">Full Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           placeholder="Enter your full name"
+                                           data-translate-placeholder="enter-full-name">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label" data-translate="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="your@email.com"
+                                       data-translate-placeholder="email-placeholder">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label" data-translate="phone-number">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       placeholder="+1 (555) 123-4567"
+                                       data-translate-placeholder="phone-placeholder">
+                            </div>
+                        </div>
+                        
+                        <!-- Provider-Specific Fields -->
+                        <div id="providerFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="business_name" class="form-label" data-translate="business-name">Business Name</label>
+                                <input type="text" class="form-control" id="business_name" name="business_name" 
+                                       placeholder="Your business name"
+                                       data-translate-placeholder="your-business-name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="service_category" class="form-label" data-translate="service-type">Service Type</label>
+                                <select class="form-select" id="service_category" name="service_category" required>
+                                    <option value="" data-translate="select-service-type">Select service type...</option>
+                                    <option value="hair_salon">Hair Salon</option>
+                                    <option value="nail_salon">Nail Salon</option>
+                                    <option value="eyebrow_eyelash">Eyebrow & Eyelash</option>
+                                    <option value="massage_therapy">Massage Therapy</option>
+                                    <option value="spa_treatment">Spa Treatment</option>
+                                    <option value="aromatherapy">Aromatherapy</option>
+                                    <option value="personal_training">Personal Training</option>
+                                    <option value="yoga_classes">Yoga Classes</option>
+                                    <option value="pilates">Pilates</option>
+                                    <option value="dermatology">Dermatology</option>
+                                    <option value="physical_therapy">Physical Therapy</option>
+                                    <option value="nutrition_counseling">Nutrition Counseling</option>
+                                    <option value="makeup_artist">Makeup Artist</option>
+                                    <option value="photography">Photography</option>
+                                    <option value="life_coaching">Life Coaching</option>
+                                    <option value="other" data-translate="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="business_description" class="form-label" data-translate="business-description">Business Description</label>
+                                <textarea class="form-control" id="business_description" name="business_description" rows="3" 
+                                          placeholder="Describe your business and what makes it special"
+                                          data-translate-placeholder="describe-business"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label" data-translate="business-address">Business Address</label>
+                                <input type="text" class="form-control" id="address" name="address" 
+                                       placeholder="123 Main St, City, State"
+                                       data-translate-placeholder="address-placeholder">
+                            </div>
+                        </div>
+                        
+                        <!-- Password Fields -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label" data-translate="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required 
+                                   placeholder="Create a password" 
+                                   data-translate-placeholder="create-password"
+                                   minlength="4">
+                            <div class="form-text" data-translate="at-least-4-characters">At least 4 characters</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label" data-translate="confirm-password">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                                   placeholder="Confirm your password"
+                                   data-translate-placeholder="confirm-your-password">
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary" data-translate="create-account">Create Account</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <p class="mb-0" data-translate="already-have-account">Already have an account?</p>
+                        <a href="{{ url_for('login') }}" data-translate="sign-in-here">Sign in here</a>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.account-type-card {
+    border: 2px solid rgba(168, 85, 247, 0.4);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(30, 20, 45, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.account-type-card:hover {
+    border-color: rgba(168, 85, 247, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
+    background: rgba(35, 25, 50, 0.9);
+}
+
+.account-type-card.selected {
+    border-color: #A855F7;
+    background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%);
+    color: white;
+    box-shadow: 0 8px 30px rgba(168, 85, 247, 0.5);
+}
+
+.account-type-card.selected i,
+.account-type-card.selected h6,
+.account-type-card.selected p {
+    color: white !important;
+}
+
+.account-type-card i {
+    color: #C084FC;
+    transition: color 0.3s ease;
+}
+
+.account-type-card.selected i {
+    color: white !important;
+}
+
+.account-type-card h6 {
+    color: #E5E7EB !important;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.account-type-card p {
+    color: #C9CDD6 !important;
+    transition: color 0.3s ease;
+}
+
+#service_category {
+    pointer-events: auto !important;
+    z-index: 10 !important;
+    position: relative !important;
+    cursor: pointer !important;
+}
+
+#providerFields {
+    position: relative !important;
+    z-index: 1 !important;
+}
+</style>
+
+<script>
+function selectAccountType(role) {
+    try {
+        // Update hidden input
+        const roleInput = document.getElementById('role');
+        if (roleInput) {
+            roleInput.value = role;
+        }
+        
+        // Update UI
+        document.querySelectorAll('.account-type-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        const selectedCard = document.querySelector(`[data-role="${role}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+        
+        // Show/hide provider fields
+        const providerFields = document.getElementById('providerFields');
+        const customerFields = document.getElementById('customerFields');
+        const businessNameField = document.getElementById('business_name');
+        const nameField = document.getElementById('name');
+        
+        if (role === 'provider') {
+            if (providerFields) {
+                providerFields.style.display = 'block';
+            }
+            if (customerFields) customerFields.style.display = 'none';
+            if (businessNameField) businessNameField.required = true;
+            const serviceCategoryField = document.getElementById('service_category');
+            if (serviceCategoryField) {
+                serviceCategoryField.required = true;
+                serviceCategoryField.style.pointerEvents = 'auto';
+                serviceCategoryField.style.cursor = 'pointer';
+            } else {
+                console.error('Service category field not found!');
+            }
+            if (nameField) nameField.required = false;
+        } else {
+            if (providerFields) providerFields.style.display = 'none';
+            if (customerFields) customerFields.style.display = 'block';
+            if (businessNameField) businessNameField.required = false;
+            const serviceCategoryField = document.getElementById('service_category');
+            if (serviceCategoryField) {
+                serviceCategoryField.required = false;
+            }
+            if (nameField) nameField.required = true;
+        }
+    } catch (error) {
+        console.error('Error in selectAccountType:', error);
+    }
+}
+
+// Initialize with consumer selected
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure all elements are loaded
+    setTimeout(function() {
+        selectAccountType('consumer');
+        
+        // Add event listeners to service category field
+        const serviceCategoryField = document.getElementById('service_category');
+        if (serviceCategoryField) {
+            // Force enable all options
+            const options = serviceCategoryField.querySelectorAll('option');
+            options.forEach((option) => {
+                option.disabled = false;
+                option.style.pointerEvents = 'auto';
+                option.style.cursor = 'pointer';
+            });
+        }
+    }, 100);
+});
+
+</script>
+{% endblock %}

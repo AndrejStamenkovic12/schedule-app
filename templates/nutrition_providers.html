@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Nutrition Counseling Providers - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card glass-effect fade-in-up mb-4">
+        <div class="card-body p-4 text-center">
+            <i class="fas fa-apple-alt fa-4x mb-3" style="background: var(--info-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+            <h1 class="gradient-text mb-3" data-translate="nutrition-providers">Nutrition Counseling Providers</h1>
+            <p class="text-muted mb-0" data-translate="nutrition-description">Diet planning, nutritional guidance, and wellness coaching</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchProvider" 
+                                       placeholder="Search providers by name or services..." 
+                                       data-translate-placeholder="search-nutrition-providers"
+                                       oninput="filterProviders()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearSearch()">
+                                <i class="fas fa-redo me-2"></i><span data-translate="clear-search">Clear Search</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'provider_grid.html' %}
+    
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('services') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i><span data-translate="back-to-all-services">Back to All Services</span>
+        </a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='provider_filter.js') }}"></script>
+{% endblock %}

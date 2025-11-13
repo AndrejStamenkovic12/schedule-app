@@ -1,0 +1,670 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Support - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Quick Support Options -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <h5 class="mb-0 fw-bold text-primary" style="font-size: 18px;">
+                    <i class="fas fa-headset me-2"></i>
+                    <span data-translate="get-help-quickly">Get Help Quickly</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% for topic in support_topics %}
+                    <button class="btn btn-outline-primary btn-sm fw-semibold text-start" 
+                            onclick="startChat('{{ topic.id }}', '{{ topic.title }}')"
+                            data-translate="{{ topic.id }}">
+                        <i class="{{ topic.icon }} me-2"></i>{{ topic.title }}
+                    </button>
+                    {% endfor %}
+                </div>
+                
+                <hr class="dark-divider">
+                
+                <div class="contact-info">
+                    <h6 class="fw-semibold mb-3 text-primary" style="font-size: 14px;" data-translate="other-ways-to-reach-us">Other Ways to Reach Us</h6>
+                    <div class="contact-item mb-2 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                        <i class="fas fa-envelope me-2" style="color: #C084FC;"></i>
+                        <small>support@appointmentscheduler.com</small>
+                    </div>
+                    <div class="contact-item mb-2 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                        <i class="fas fa-phone me-2" style="color: #34D399;"></i>
+                        <small>1-800-APPOINT (1-800-277-6468)</small>
+                    </div>
+                    <div class="contact-item mb-0 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                        <i class="fas fa-clock me-2" style="color: #60A5FA;"></i>
+                        <small data-translate="business-hours">Mon-Fri: 9AM-6PM EST</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Section -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="mb-0 fw-bold text-primary" style="font-size: 18px;">
+                    <i class="fas fa-question-circle me-2"></i>
+                    <span data-translate="frequently-asked-questions">Frequently Asked Questions</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="faq-list">
+                    {% for qa in faqs %}
+                    <div class="mb-3 p-3 card">
+                        <h6 class="fw-bold mb-2 text-primary" style="font-size: 15px;" data-translate="faq-q-{{ loop.index0 }}">{{ qa.question }}</h6>
+                        <p class="mb-0 card-text" style="font-size: 14px; line-height: 1.6;" data-translate="faq-a-{{ loop.index0 }}">{{ qa.answer }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content chat-modal-content">
+            <div class="modal-header chat-modal-header">
+                <h5 class="modal-title text-primary">
+                    <i class="fas fa-comments me-2"></i>
+                    <span data-translate="live-chat-support">Live Chat Support</span>
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-white-50 d-none d-sm-inline" style="font-size: 0.75rem;" data-translate="press-esc-to-close">Press ESC to close</small>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background-image: none;" title="" data-translate-title="close-chat"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 chat-modal-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <strong class="text-primary" data-translate="support-bot">Support Bot</strong>
+                                    <small class="dark-text-secondary" data-translate="now">now</small>
+                                </div>
+                                <div class="message-text dark-text-secondary" data-translate="bot-welcome-message">
+                                    Hello! I'm here to help you. What can I assist you with today?
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="chatInput" 
+                                   placeholder="Type your message here..." 
+                                   data-translate-placeholder="type-message-here"
+                                   onkeypress="handleChatKeyPress(event)">
+                            <button class="btn btn-primary" type="button" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Support Request Modal -->
+<div class="modal fade" id="supportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    <span data-translate="submit-support-request">Submit Support Request</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supportForm">
+                    <div class="mb-3">
+                        <label for="supportTopic" class="form-label" data-translate="support-topic">Support Topic</label>
+                        <select class="form-select" id="supportTopic" required>
+                            <option value="" data-translate="select-topic">Select a topic...</option>
+                            <option value="refund" data-translate="request-refund">Request Refund</option>
+                            <option value="reschedule" data-translate="reschedule-appointment">Reschedule Appointment</option>
+                            <option value="technical" data-translate="technical-issue">Technical Issue</option>
+                            <option value="billing" data-translate="billing-question">Billing Question</option>
+                            <option value="general" data-translate="general-inquiry">General Inquiry</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentId" class="form-label" data-translate="appointment-id">Appointment ID (if applicable)</label>
+                        <input type="text" class="form-control" id="appointmentId" 
+                               placeholder="e.g., #123" data-translate-placeholder="appointment-id-example">
+                    </div>
+                    <div class="mb-3">
+                        <label for="supportMessage" class="form-label" data-translate="describe-issue">Describe your issue</label>
+                        <textarea class="form-control" id="supportMessage" rows="4" 
+                                  placeholder="Please provide as much detail as possible..." 
+                                  data-translate-placeholder="provide-detail" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supportEmail" class="form-label" data-translate="email-followup">Email for follow-up</label>
+                        <input type="email" class="form-control" id="supportEmail" 
+                               placeholder="your.email@example.com" 
+                               data-translate-placeholder="email-example" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitSupportRequest()" data-translate="submit-request">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chat functionality
+let chatModal;
+let chatMessages;
+let chatInput;
+let currentChatTopic = '';
+
+// Initialize chat when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const chatModalElement = document.getElementById('chatModal');
+    if (chatModalElement) {
+        chatModal = new bootstrap.Modal(chatModalElement, {
+            backdrop: false, // Remove dark backdrop
+            keyboard: true // Allow ESC key to close
+        });
+        
+        // Ensure close button works
+        const closeButton = chatModalElement.querySelector('.btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                chatModal.hide();
+            });
+        }
+        
+        // Also allow clicking outside to close (optional, but helpful)
+        chatModalElement.addEventListener('click', function(e) {
+            if (e.target === chatModalElement) {
+                chatModal.hide();
+            }
+        });
+    }
+    chatMessages = document.getElementById('chatMessages');
+    chatInput = document.getElementById('chatInput');
+    
+    // Ensure input is always accessible
+    if (chatInput) {
+        chatInput.addEventListener('focus', function() {
+            this.style.outline = '2px solid rgba(168, 85, 247, 0.5)';
+        });
+    }
+});
+
+// Toggle chat (for the main Start Chat button)
+function toggleChat() {
+    currentChatTopic = 'general';
+    openChatModal();
+}
+
+// Start chat with a specific topic (for Get Help Quickly buttons)
+function startChat(topicId, topicTitle) {
+    currentChatTopic = topicId;
+    
+    // Clear previous messages except welcome
+    chatMessages.innerHTML = `
+        <div class="message bot-message">
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-header">
+                    <strong class="text-primary" data-translate="support-bot">Support Bot</strong>
+                    <small class="dark-text-secondary" data-translate="now">now</small>
+                </div>
+                <div class="message-text dark-text-secondary" data-translate="bot-welcome-message">
+                    Hello! I'm here to help you with ${topicTitle}. What can I assist you with today?
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Apply translations
+    if (typeof applyTranslations === 'function') {
+        applyTranslations(localStorage.getItem('language') || 'en');
+    }
+    
+    // Open chat modal
+    openChatModal();
+}
+
+// Open chat modal (shared function)
+function openChatModal() {
+    // Show chat modal
+    chatModal.show();
+    
+    // Focus on input after modal is shown
+    setTimeout(() => {
+        if (chatInput) {
+            chatInput.focus();
+        }
+    }, 300);
+}
+
+// Handle Enter key press in chat input
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+// Send message to chatbot
+function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessageToChat(message, 'user');
+    
+    // Clear input
+    chatInput.value = '';
+    
+    // Simulate bot response
+    setTimeout(() => {
+        const botResponse = getBotResponse(message, currentChatTopic);
+        addMessageToChat(botResponse, 'bot');
+    }, 1000);
+}
+
+// Add message to chat
+function addMessageToChat(message, sender) {
+    if (!chatMessages) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const avatar = sender === 'user' ? 'fas fa-user' : 'fas fa-robot';
+    const senderName = sender === 'user' ? 'You' : 'Support Bot';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">
+            <i class="${avatar}"></i>
+        </div>
+        <div class="message-content">
+            <div class="message-header">
+                <strong class="text-primary">${senderName}</strong>
+                <small class="dark-text-secondary">now</small>
+            </div>
+            <div class="message-text dark-text-secondary">${message}</div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Re-focus on input
+    setTimeout(() => {
+        if (chatInput) {
+            chatInput.focus();
+        }
+    }, 100);
+}
+
+// Get bot response based on message and topic
+function getBotResponse(message, topic) {
+    const lowerMessage = message.toLowerCase();
+    
+    // Specific responses based on keywords and context
+    if (lowerMessage.includes('refund') || lowerMessage.includes('money back') || lowerMessage.includes('cancel')) {
+        if (lowerMessage.includes('how long') || lowerMessage.includes('when')) {
+            return "Refunds are typically processed within 3-5 business days and will appear on your original payment method within 7-10 business days. You'll receive an email confirmation once processed.";
+        } else if (lowerMessage.includes('policy') || lowerMessage.includes('rules')) {
+            return "Our refund policy allows full refunds for cancellations made at least 24 hours before your appointment. Cancellations within 24 hours may incur a 50% cancellation fee.";
+        } else if (lowerMessage.includes('process') || lowerMessage.includes('how to')) {
+            return "To request a refund: 1) Go to your appointment history, 2) Click 'Cancel' on the appointment, 3) Select 'Request Refund', 4) Provide reason for cancellation. You'll receive confirmation within 24 hours.";
+        } else {
+            return "I can help you with your refund request. To process your refund, I'll need your appointment ID and the reason for cancellation. What's your appointment ID?";
+        }
+    }
+    
+    if (lowerMessage.includes('reschedule') || lowerMessage.includes('change time') || lowerMessage.includes('move appointment')) {
+        if (lowerMessage.includes('how') || lowerMessage.includes('process')) {
+            return "To reschedule: 1) Go to your appointment history, 2) Click 'Reschedule' on your appointment, 3) Choose a new date/time from available slots, 4) Confirm the change. You'll receive an updated confirmation email.";
+        } else if (lowerMessage.includes('free') || lowerMessage.includes('cost') || lowerMessage.includes('charge')) {
+            return "Rescheduling is free when done at least 24 hours before your appointment. Changes within 24 hours may incur a $10 rescheduling fee.";
+        } else if (lowerMessage.includes('how many times') || lowerMessage.includes('limit')) {
+            return "You can reschedule up to 3 times per appointment. After that, you'll need to cancel and book a new appointment.";
+        } else {
+            return "I can help you reschedule your appointment. What's your current appointment ID and what new date/time would work better for you?";
+        }
+    }
+    
+    if (lowerMessage.includes('technical') || lowerMessage.includes('bug') || lowerMessage.includes('error') || lowerMessage.includes('not working')) {
+        if (lowerMessage.includes('login') || lowerMessage.includes('password')) {
+            return "For login issues: 1) Try resetting your password using 'Forgot Password', 2) Clear your browser cache and cookies, 3) Try a different browser or incognito mode. If still having issues, provide your email address and I'll escalate to technical support.";
+        } else if (lowerMessage.includes('booking') || lowerMessage.includes('schedule')) {
+            return "If booking isn't working: 1) Ensure JavaScript is enabled, 2) Try refreshing the page, 3) Clear browser cache, 4) Try a different browser. What specific error message are you seeing?";
+        } else if (lowerMessage.includes('payment') || lowerMessage.includes('card')) {
+            return "For payment issues: 1) Verify your card details are correct, 2) Check if your bank has blocked the transaction, 3) Try a different payment method, 4) Ensure sufficient funds. What payment method are you using?";
+        } else {
+            return "I'm here to help with technical issues. Can you describe what specific problem you're experiencing? Are you seeing any error messages? What browser and device are you using?";
+        }
+    }
+    
+    if (lowerMessage.includes('billing') || lowerMessage.includes('payment') || lowerMessage.includes('charge') || lowerMessage.includes('invoice')) {
+        if (lowerMessage.includes('receipt') || lowerMessage.includes('invoice')) {
+            return "You can download your receipt from your appointment history. Go to the specific appointment and click 'Download Receipt'. If you need a detailed invoice, contact billing@appointmentscheduler.com.";
+        } else if (lowerMessage.includes('dispute') || lowerMessage.includes('wrong charge')) {
+            return "If you see an incorrect charge, please provide: 1) Your appointment ID, 2) The amount charged, 3) The date of the charge, 4) Your email address. I'll escalate this to our billing team for immediate review.";
+        } else if (lowerMessage.includes('methods') || lowerMessage.includes('cards')) {
+            return "We accept: Visa, MasterCard, American Express, Discover, PayPal, and Apple Pay. All payments are processed securely through Stripe.";
+        } else {
+            return "I can help with billing questions. What specific billing issue are you experiencing? Are you seeing unexpected charges or having payment problems?";
+        }
+    }
+    
+    if (lowerMessage.includes('appointment') || lowerMessage.includes('booking') || lowerMessage.includes('schedule')) {
+        if (lowerMessage.includes('how to') || lowerMessage.includes('book')) {
+            return "To book an appointment: 1) Browse services or search for providers, 2) Select your preferred provider, 3) Choose date/time from available slots, 4) Fill out your details, 5) Complete payment. You'll receive confirmation via email.";
+        } else if (lowerMessage.includes('cancel') || lowerMessage.includes('delete')) {
+            return "To cancel: Go to your appointment history, find the appointment, and click 'Cancel'. Cancellations 24+ hours in advance are free. Within 24 hours may incur a cancellation fee.";
+        } else if (lowerMessage.includes('find') || lowerMessage.includes('where')) {
+            return "You can find your appointments in: 1) Your dashboard (upcoming appointments), 2) Appointment history (all past appointments), 3) Email confirmations. Need help finding a specific appointment?";
+        } else {
+            return "I can help with appointment questions. Are you looking to book a new appointment, manage an existing one, or do you have questions about our booking process?";
+        }
+    }
+    
+    if (lowerMessage.includes('account') || lowerMessage.includes('profile') || lowerMessage.includes('settings')) {
+        if (lowerMessage.includes('change') || lowerMessage.includes('update')) {
+            return "To update your account: 1) Go to your profile page, 2) Click 'Edit Profile', 3) Update your information, 4) Save changes. For email changes, you'll need to verify the new email address.";
+        } else if (lowerMessage.includes('delete') || lowerMessage.includes('remove')) {
+            return "To delete your account: 1) Go to your profile settings, 2) Scroll to 'Account Settings', 3) Click 'Delete Account', 4) Confirm deletion. This will cancel all future appointments and cannot be undone.";
+        } else {
+            return "I can help with account management. What would you like to do with your account - update information, change settings, or something else?";
+        }
+    }
+    
+    if (lowerMessage.includes('provider') || lowerMessage.includes('service')) {
+        if (lowerMessage.includes('find') || lowerMessage.includes('search')) {
+            return "To find providers: 1) Use our Services page to browse by category, 2) Use the search bar to find specific services, 3) Filter by location, price, or availability, 4) Read reviews and compare options.";
+        } else if (lowerMessage.includes('become') || lowerMessage.includes('register')) {
+            return "To become a provider: 1) Click 'Register' and select 'Provider', 2) Complete your business profile, 3) Add services and pricing, 4) Set your availability, 5) Verify your business information. Our team will review and approve your application.";
+        } else {
+            return "I can help with provider-related questions. Are you looking to find a provider, become a provider, or do you have questions about our provider services?";
+        }
+    }
+    
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+        return "Hello! I'm your support assistant. I can help you with appointments, refunds, technical issues, billing questions, and more. What can I assist you with today?";
+    }
+    
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+        return "You're welcome! Is there anything else I can help you with? I'm here to assist with any questions about our appointment scheduling system.";
+    }
+    
+    if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+        return "I'm here to help! I can assist with: booking appointments, managing your account, refunds and cancellations, technical issues, billing questions, finding providers, and more. What do you need help with?";
+    }
+    
+    if (lowerMessage.includes('hours') || lowerMessage.includes('time') || lowerMessage.includes('when')) {
+        return "Our support hours are Monday-Friday, 9AM-6PM EST. For urgent issues outside these hours, you can submit a support request and we'll respond within 24 hours. Is there something urgent I can help with right now?";
+    }
+    
+    if (lowerMessage.includes('contact') || lowerMessage.includes('phone') || lowerMessage.includes('email')) {
+        return "You can reach us at: 📧 Email: support@appointmentscheduler.com, 📞 Phone: 1-800-APPOINT (1-800-277-6468), 💬 Live Chat: Available now (that's me!), or submit a support request form for detailed issues.";
+    }
+    
+    // Default intelligent response based on context
+    if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('trouble')) {
+        return "I understand you're having an issue. To help you better, could you provide more details about what's not working? For example: what page were you on, what were you trying to do, and what error message (if any) did you see?";
+    }
+    
+    if (lowerMessage.includes('question') || lowerMessage.includes('ask')) {
+        return "I'm here to answer your questions! Feel free to ask me about booking appointments, managing your account, our policies, technical issues, or anything else related to our platform.";
+    }
+    
+    // Fallback responses that are still helpful
+    const helpfulResponses = [
+        "I'd be happy to help! Could you provide more details about what you're looking for? For example, are you trying to book an appointment, manage an existing one, or do you have a specific question?",
+        "Let me help you with that. What specific information are you looking for? I can assist with appointments, account management, billing, technical issues, and more.",
+        "I'm here to help! Could you tell me more about what you need assistance with? The more details you provide, the better I can assist you."
+    ];
+    
+    return helpfulResponses[Math.floor(Math.random() * helpfulResponses.length)];
+}
+
+// Submit support request
+function submitSupportRequest() {
+    const form = document.getElementById('supportForm');
+    const formData = new FormData(form);
+    
+    // Get form values
+    const topic = document.getElementById('supportTopic').value;
+    const appointmentId = document.getElementById('appointmentId').value;
+    const message = document.getElementById('supportMessage').value;
+    const email = document.getElementById('supportEmail').value;
+    
+    if (!topic || !message || !email) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    // Simulate form submission
+    alert('Support request submitted successfully! We\'ll get back to you within 24 hours.');
+    
+    // Close modal and reset form
+    bootstrap.Modal.getInstance(document.getElementById('supportModal')).hide();
+    form.reset();
+}
+</script>
+
+<style>
+/* Chat Modal Styles */
+.chat-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    max-height: 90vh;
+}
+
+.chat-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+    background: var(--gradient-primary) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-modal-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-modal-header .btn-close {
+    opacity: 1 !important;
+    filter: none !important;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    margin: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chat-modal-header .btn-close::before {
+    content: '×';
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.chat-modal-header .btn-close:hover {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.chat-modal-header .btn-close:active {
+    transform: scale(0.95);
+}
+
+.chat-modal-header .btn-close:focus {
+    outline: 3px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 2px;
+    background: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Chat styles */
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: rgba(30, 20, 45, 0.6);
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: transparent;
+    min-height: 0;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: rgba(168, 85, 247, 0.1);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.4);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 85, 247, 0.6);
+}
+
+.message {
+    display: flex;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+.user-message .message-avatar {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.message-content {
+    flex: 1;
+    background: rgba(40, 25, 60, 0.8);
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.message-text {
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.chat-input-container {
+    padding: 15px;
+    background: rgba(40, 25, 60, 0.8);
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+    flex-shrink: 0;
+}
+
+.chat-input-container .form-control {
+    background: rgba(25, 15, 40, 0.9) !important;
+    border-color: rgba(168, 85, 247, 0.4) !important;
+    color: var(--text-primary) !important;
+}
+
+.chat-input-container .form-control:focus {
+    background: rgba(30, 20, 45, 0.95) !important;
+    border-color: rgba(168, 85, 247, 0.7) !important;
+    box-shadow: 0 0 0 0.2rem rgba(168, 85, 247, 0.3);
+}
+
+.bot-message {
+    justify-content: flex-start;
+}
+
+.user-message {
+    justify-content: flex-end;
+    flex-direction: row-reverse;
+}
+
+.user-message .message-avatar {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+.user-message .message-content {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.4);
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "type": "aromatherapy",
+    "datetime": "2025-11-07 15:30:00",
+    "duration": 60,
+    "notes": "",
+    "created_at": "2025-11-04 14:31:19.373954",
+    "user_id": 2,
+    "provider_id": 1,
+    "status": "completed",
+    "service_id": 1,
+    "service_name": "Male Haircut",
+    "service_cost": 5.0,
+    "customer_name": "Andrej Stamenkovic",
+    "customer_phone": "+381692903202",
+    "customer_email": "stamenkovicandrej12@gmail.com",
+    "completed_at": "2025-11-07T19:37:03.022211"
+  }
+]

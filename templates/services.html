@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Services - Appointment Scheduler{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center mb-5 py-4">
+    <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: rgba(168, 85, 247, 0.2); border-radius: 16px;">
+        <i class="fas fa-concierge-bell" style="font-size: 24px; color: #C084FC;"></i>
+    </div>
+    <h1 class="fw-bold mb-3 text-primary" style="font-size: 40px;">
+        <span data-translate="our-services">Our Services</span>
+    </h1>
+    <p class="mx-auto mb-0 dark-text-secondary" style="font-size: 18px; max-width: 672px;" data-translate="services-hero-description">
+        Discover a wide range of professional services from trusted providers. Book appointments for hair, beauty, wellness, fitness, and more.
+    </p>
+</div>
+
+<!-- Search and Filter -->
+<div class="mb-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text" style="background: rgba(30, 20, 45, 0.8); border-color: rgba(168, 85, 247, 0.4); border-radius: 8px 0 0 8px; color: #E5E7EB;">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="serviceSearch" 
+                               placeholder="Search services or providers..." data-translate-placeholder="search-services-providers"
+                               style="border-radius: 0 8px 8px 0;">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="" data-translate="all-categories">All Categories</option>
+                        <option value="Hair & Beauty" data-translate="hair-beauty">Hair & Beauty</option>
+                        <option value="Wellness & Spa" data-translate="wellness-spa">Wellness & Spa</option>
+                        <option value="Fitness & Training" data-translate="fitness-training">Fitness & Training</option>
+                        <option value="Health & Medical" data-translate="health-medical">Health & Medical</option>
+                        <option value="Specialty Services" data-translate="specialty-services">Specialty Services</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services by Category -->
+{% for category in services %}
+<div class="service-category mb-5">
+    <div class="category-header mb-4">
+        <h3 class="text-primary">
+            <i class="{{ category.icon }} me-2"></i>
+            {{ category.category }}
+        </h3>
+        <p class="dark-text-secondary">{{ category.description }}</p>
+    </div>
+    
+    <div class="row g-4">
+        {% for service in category.services %}
+        <div class="col-lg-4 col-md-6 service-card" 
+             data-category="{{ category.category }}" 
+             data-name="{{ service.name|lower }}">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold" style="font-size: 16px;" data-translate="service-{{ service.name|lower|replace(' ', '-')|replace('&', 'and') }}">{{ service.name }}</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3 card-text" style="font-size: 14px; line-height: 1.6;">{{ service.description }}</p>
+                    
+                    <div class="mb-3">
+                        <div class="mb-2 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                            <i class="fas fa-clock me-2" style="color: #C084FC;"></i>
+                            <strong class="text-primary" data-translate="duration">Duration:</strong> <span style="margin-left: 4px;">{{ service.duration }}</span>
+                        </div>
+                        <div class="mb-2 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                            <i class="fas fa-coins me-2" style="color: #C084FC;"></i>
+                            <strong class="text-primary" data-translate="price">Price:</strong> 
+                            <span style="margin-left: 4px;">
+                                {% if service.price_range == 'Price varies' %}
+                                    <span data-translate="price-varies">Price varies</span>
+                                {% else %}
+                                    {{ service.price_range }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="mb-0 d-flex align-items-center dark-text-secondary" style="font-size: 14px;">
+                            <i class="fas fa-building me-2" style="color: #C084FC;"></i>
+                            <strong class="text-primary" data-translate="providers">Providers:</strong> <span style="margin-left: 4px;">{{ service.provider_details|length }} <span data-translate="available">available</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid">
+                        {% if service.name == 'Hair Salon' %}
+                            <a href="{{ url_for('hair_providers') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i><span data-translate="view-providers">View Providers</span>
+                            </a>
+                        {% elif service.name == 'Nail Salon' %}
+                            <a href="{{ url_for('nail_providers') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i><span data-translate="view-providers">View Providers</span>
+                            </a>
+                        {% elif service.name == 'Eyebrow & Eyelash' %}
+                            <a href="{{ url_for('eyebrow_providers') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i><span data-translate="view-providers">View Providers</span>
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('massage_providers') if service.name == 'Massage Therapy' else url_for('spa_providers') if service.name == 'Spa Treatment' else url_for('aromatherapy_providers') if service.name == 'Aromatherapy' else url_for('training_providers') if service.name == 'Personal Training' else url_for('yoga_providers') if service.name == 'Yoga Classes' else url_for('pilates_providers') if service.name == 'Pilates' else url_for('dermatology_providers') if service.name == 'Dermatology' else url_for('physical_therapy_providers') if service.name == 'Physical Therapy' else url_for('nutrition_providers') if service.name == 'Nutrition Counseling' else url_for('makeup_providers') if service.name == 'Makeup Artist' else url_for('photography_providers') if service.name == 'Photography' else url_for('lifecoaching_providers') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i><span data-translate="view-providers">View Providers</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+<!-- No Results Message -->
+<div id="noResults" class="text-center py-5" style="display: none;">
+    <i class="fas fa-search fa-4x mb-3" style="color: #C084FC;"></i>
+    <h5 class="text-primary" data-translate="no-services-found">No services found</h5>
+    <p class="dark-text-secondary" data-translate="adjust-search-criteria">Try adjusting your search criteria or browse all categories.</p>
+    <button class="btn btn-primary" onclick="clearFilters()">
+        <i class="fas fa-refresh me-1"></i><span data-translate="clear-filters">Clear Filters</span>
+    </button>
+</div>
+
+<script>
+// Initialize service filtering when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('serviceSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterServices);
+        searchInput.addEventListener('keyup', filterServices);
+    }
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', filterServices);
+    }
+});
+
+function filterServices() {
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(performFilter, 300);
+}
+
+function performFilter() {
+    const searchInput = document.getElementById('serviceSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const serviceCards = document.querySelectorAll('.service-card');
+    const noResults = document.getElementById('noResults');
+    
+    if (!searchInput || !categoryFilter || !serviceCards.length) {
+        return;
+    }
+    
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const selectedCategory = categoryFilter.value;
+    
+    let visibleCount = 0;
+    const categoryMap = new Map();
+    
+    // First pass: filter cards and track visible categories
+    serviceCards.forEach((card) => {
+        const serviceName = card.dataset.name || '';
+        const category = card.dataset.category || '';
+        
+        // Check if category container should be visible
+        if (!categoryMap.has(category)) {
+            categoryMap.set(category, { visible: false, element: card.closest('.service-category') });
+        }
+        
+        let showCard = true;
+        
+        // Search filter - check if search term matches service name
+        if (searchTerm && !serviceName.includes(searchTerm)) {
+            showCard = false;
+        }
+        
+        // Category filter
+        if (selectedCategory && category !== selectedCategory) {
+            showCard = false;
+        }
+        
+        if (showCard) {
+            card.style.display = '';
+            card.style.animation = 'fadeInUp 0.5s ease both';
+            visibleCount++;
+            categoryMap.get(category).visible = true;
+        } else {
+            card.style.animation = 'fadeOut 0.3s ease both';
+            setTimeout(() => {
+                card.style.display = 'none';
+            }, 300);
+        }
+    });
+    
+    // Hide/show category sections based on visibility
+    categoryMap.forEach(({ visible, element }) => {
+        if (element) {
+            if (visible) {
+                element.style.display = '';
+            } else {
+                element.style.display = 'none';
+            }
+        }
+    });
+    
+    // Show/hide no results message
+    if (noResults) {
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+            noResults.style.animation = 'fadeInUp 0.5s ease both';
+        } else {
+            noResults.style.animation = 'fadeOut 0.3s ease both';
+            setTimeout(() => {
+                noResults.style.display = 'none';
+            }, 300);
+        }
+    }
+}
+
+function clearFilters() {
+    const searchInput = document.getElementById('serviceSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+    
+    if (searchInput) searchInput.value = '';
+    if (categoryFilter) categoryFilter.value = '';
+    
+    // Show all cards and categories
+    document.querySelectorAll('.service-card').forEach((card, index) => {
+        card.style.display = '';
+        card.style.animation = `fadeInUp 0.5s ease ${index * 0.05}s both`;
+    });
+    
+    // Show all category sections
+    document.querySelectorAll('.service-category').forEach((category) => {
+        category.style.display = '';
+    });
+    
+    // Hide no results message
+    const noResults = document.getElementById('noResults');
+    if (noResults) {
+        noResults.style.display = 'none';
+    }
+}
+</script>
+
+<!-- <span data-translate="view-providers">View Providers</span> Modal -->
+<div class="modal fade" id="providersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-building me-2"></i>
+                    <span id="modalServiceName">Service</span> - <span data-translate="available-providers">Available Providers</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="providersList" class="row g-3">
+                    <!-- Providers will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Book Service Modal -->
+<div class="modal fade" id="bookServiceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    <span data-translate="book">Book</span> <span id="bookServiceName">Service</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span data-translate="booking-redirect-message">This will redirect you to the appointment scheduling page with the service pre-selected.</span>
+                </div>
+                <p data-translate="booking-next-page-info">You'll be able to choose your preferred provider and time slot on the next page.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="proceedToBooking()" data-translate="continue-to-booking">Continue to Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
